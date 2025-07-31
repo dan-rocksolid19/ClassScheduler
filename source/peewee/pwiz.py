@@ -16,7 +16,7 @@ except ImportError:
 from librepy.peewee.playhouse.reflection import *
 
 
-HEADER = """from peewee import *%s
+HEADER = """from librepy.peewee.peewee import *%s
 
 database = %s('%s'%s)
 """

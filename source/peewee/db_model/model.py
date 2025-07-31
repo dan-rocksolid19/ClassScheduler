@@ -15,7 +15,7 @@ For example, to import a file named config, use the following:
 from librepy import config
 '''
 
-from librepy.model.base_model import BaseModel
+from librepy.peewee.db_model.base_model import BaseModel
 from librepy.peewee.peewee import * 
 
 class FertilizerCmdCtrSettings(BaseModel):

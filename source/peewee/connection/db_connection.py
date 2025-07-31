@@ -5,7 +5,7 @@ This module establishes the database connection and makes it available to other 
 
 from librepy.peewee.sdbc_peewee import SDBCPostgresqlDatabase
 from librepy.utils.db_config_manager import DatabaseConfigManager
-from librepy.model.base_model import database_proxy
+from librepy.peewee.db_model.base_model import database_proxy
 from librepy.pybrex.values import pybrex_logger
 
 logger = pybrex_logger(__name__)
@@ -18,7 +18,7 @@ def _create_database_instance():
     if not connection_params or not connection_params.get("database"):
         logger.info("No database configuration found, prompting user for configuration")
         if not db_config_manager.prompt_configuration():
-            from librepy.database.db_exceptions import DBCanceledException
+            from librepy.peewee.connection.db_exceptions import DBCanceledException
             raise DBCanceledException("Database configuration canceled by user")
         connection_params = db_config_manager.get_connection_params()
         if not connection_params or not connection_params.get("database"):
@@ -48,13 +48,24 @@ def get_database_connection(force_reinitialize: bool = False):
 
 def _bind_models_to_db(db):
     logger.debug("Binding models to database")
-    from librepy.model.db_init import REQUIRED_MODELS
+    import inspect
+    import librepy.model.model as model_module
+    from librepy.peewee.db_model.base_model import BaseModel
 
-    for model in REQUIRED_MODELS:
+    # Dynamically find all classes that inherit from BaseModel
+    models = []
+    for name, obj in inspect.getmembers(model_module, inspect.isclass):
+        if obj != BaseModel and issubclass(obj, BaseModel):
+            models.append(obj)
+            logger.debug(f"Found model class: {obj.__name__}")
+
+    logger.debug(f"Found {len(models)} model classes to bind")
+
+    for model in models:
         # Force the model to use the actual database instance instead of proxy
         model._meta.database = db
         logger.debug(f"Bound model {model.__name__} to database: {type(model._meta.database).__name__}")
-    logger.info(f"Successfully bound {len(REQUIRED_MODELS)} models to database")
+    logger.info(f"Successfully bound {len(models)} models to database")
 
 
 def reinitialize_database_connection():

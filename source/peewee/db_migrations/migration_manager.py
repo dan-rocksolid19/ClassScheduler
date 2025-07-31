@@ -1,22 +1,23 @@
-from librepy.model.db_connection import get_database_connection
-from librepy.database.migrations import make_subcategory_optional
-from librepy.database.migrations import create_job_names_table
-from librepy.database.migrations import update_measurement_units
-from librepy.database.migrations import add_gallons_to_batch_products
-from librepy.database.migrations import add_rate_basis_to_products
-from librepy.database.migrations import add_rate_basis_to_job_products
-from librepy.database.migrations import add_notes_to_products_and_fields
-from librepy.database.migrations import create_fertilizer_settings_table
+"""Example migration manager illustrating the steps involved in applying
+schema migrations in a controlled, repeatable fashion.
+
+Key responsibilities:
+1. Ensure the tracking table (schema_migrations) exists.
+2. Determine which migrations have not yet run.
+3. Execute migrations atomically in the order defined by MIGRATION_ORDER.
+4. Record successful migrations so they are not re-applied.
+
+This file is intended as a minimal, self-contained template that you can
+adapt to your own project's needs.
+"""
+
+from librepy.peewee.connection.db_connection import get_database_connection
+#from librepy.peewee.db_migrations.migrations import migration_template as example_migration
+#Add the rest of the migration imports here
 
 MIGRATION_ORDER = [
-    ('create_fertilizer_settings_table', create_fertilizer_settings_table),
-    ('make_subcategory_optional', make_subcategory_optional),
-    ('create_job_names_table', create_job_names_table),
-    ('update_measurement_units', update_measurement_units),
-    ('add_gallons_to_batch_products', add_gallons_to_batch_products),
-    ('add_rate_basis_to_products', add_rate_basis_to_products),
-    ('add_rate_basis_to_job_products', add_rate_basis_to_job_products),
-    ('add_notes_to_products_and_fields', add_notes_to_products_and_fields),
+    #('example_migration', example_migration),
+    #Add the rest of the migrations here, in the order you want them to run
 ]
 
 def _ensure_schema_migrations_table(database, logger):
@@ -105,20 +106,8 @@ def run_all_migrations(logger, database=None):
         
         # Ensure models are properly bound to this database instance
         logger.debug("Ensuring models are bound to database connection")
-        from librepy.model.db_connection import _bind_models_to_db
+        from librepy.peewee.connection.db_connection import _bind_models_to_db
         _bind_models_to_db(database)
-        
-        # Ensure core tables exist before migrations
-        from librepy.model.db_init import initialize_database
-        logger.debug("Starting database initialization")
-        init_success, init_msg = initialize_database(logger, database)
-        if not init_success:
-            logger.error(f"Database initialization failed: {init_msg}")
-            if close_db:
-                database.close()
-            MsgBox(f"Database initialization failed: {init_msg}", 16, "Migration Error")
-            return False
-        logger.info("Database initialization completed successfully")
         
         if not _ensure_schema_migrations_table(database, logger):
             database.close()

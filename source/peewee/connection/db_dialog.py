@@ -18,7 +18,7 @@ from librepy import config
 import traceback
 from librepy.pybrex import dialog
 from librepy.pybrex.msgbox import confirm_action
-from librepy.database.db_exceptions import DBCanceledException
+from librepy.peewee.connection.db_exceptions import DBCanceledException
 from librepy.utils.db_config_manager import DatabaseConfigManager
 
 import uno
@@ -248,7 +248,7 @@ class DBDialog(dialog.DialogBase):
     def _test_conn(self, *args):
         """Test the database connection by actually querying the database"""
         try:
-            from librepy.database import test_connection
+            from librepy.peewee.connection import test_connection
         except Exception as e:
             self.logger.error(f"Failed to import test connection module: {str(e)}")
             MsgBox("Connection testing unavailable. Please check your LibrePy installation.")
@@ -358,8 +358,8 @@ class DBDialog(dialog.DialogBase):
     def _save(self, *args):
         """Save the database connection settings to config file"""
         try:
-            from librepy.database import test_connection
-            from librepy.model.db_connection import reinitialize_database_connection
+            from librepy.peewee.connection import test_connection
+            from librepy.peewee.connection.db_connection import reinitialize_database_connection
         except Exception as e:
             self.logger.error(f"Failed to import required modules: {str(e)}")
             MsgBox("Database modules unavailable. Please check your LibrePy installation.")
@@ -416,26 +416,13 @@ class DBDialog(dialog.DialogBase):
             else:
                 self.logger.info("Successfully refreshed database connection with new settings")
                 
-            from librepy.model.db_connection import get_database_connection
+            from librepy.peewee.connection.db_connection import get_database_connection
             database = get_database_connection()
 
             database.connect()
-
-            self.logger.debug("Initializing database tables")
-            from librepy.model.db_init import initialize_database
-            result, message = initialize_database(self.logger, database)
-            self.logger.info(f"Database initialization result: {result}, message: {message}")
-            
-            if not result:
-                self.logger.warning(f"Table verification issues: {message}")
-                self.logger.debug(f"Detailed table verification error: {message}")
-                MsgBox(f"Database initialization failed with the following error:\n\n{message}")
-            else:
-                self.logger.debug("Database tables initialized successfully")
-                MsgBox("Database tables were successfully created and initialized.")
             
             # Run migrations on the newly selected database to ensure schema is up to date
-            from librepy.database.migration_manager import run_all_migrations
+            from librepy.peewee.db_migrations.migration_manager import run_all_migrations
             migration_success = run_all_migrations(self.logger)
             if not migration_success:
                 self.logger.error("Database migration failed after selecting database")

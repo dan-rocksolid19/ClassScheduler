@@ -1,0 +1,1 @@
+Place your jrxml files in the templates folder.

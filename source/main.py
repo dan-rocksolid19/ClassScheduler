@@ -31,13 +31,13 @@ def main(*args):
     logger.info("Main method started")
     try:
         # Import this first to catch the potential exception
-        from librepy.database.db_dialog import DBCanceledException
+        from librepy.peewee.connection.db_dialog import DBCanceledException
         
         ctx = getDefaultContext()
         smgr = ctx.getServiceManager()
 
         # Check database configuration and run migrations
-        from librepy.database.migration_manager import run_all_migrations
+        from librepy.peewee.db_migrations.migration_manager import run_all_migrations
         migration_success = run_all_migrations(logger)
         if not migration_success:
             logger.error("Database migrations failed, aborting application startup")
@@ -64,7 +64,7 @@ def startup(*args):
     logger.info("Startup method called")
     try:
         # Import this first to catch the potential exception
-        from librepy.database.db_dialog import DBCanceledException
+        from librepy.peewee.connection.db_dialog import DBCanceledException
         from librepy.fertilizer_cmd_ctr.main import FertilizerCmdCtr
         from librepy.jasper_report.jasper_report_manager import precopy_all_templates
         global myDocument, _document_close_ready
@@ -84,7 +84,7 @@ def startup(*args):
         # This ensures the dialog shows in the main thread if needed
         logger.info("Checking database configuration")
         try:
-            from librepy.model.db_connection import get_database_connection
+            from librepy.peewee.connection.db_connection import get_database_connection
             database = get_database_connection()
             database.connect()
             database.close()
@@ -106,7 +106,7 @@ def startup(*args):
         def run_app():
             try:
                 # Run database migrations (should work now since config is verified)
-                from librepy.database.migration_manager import run_all_migrations
+                from librepy.peewee.db_migrations.migration_manager import run_all_migrations
                 migration_success = run_all_migrations(logger)
                 if not migration_success:
                     logger.error("Database migrations failed, aborting application startup")

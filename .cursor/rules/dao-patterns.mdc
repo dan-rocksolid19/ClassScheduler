@@ -1,0 +1,176 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# FertilizerCommandCenter DAO Implementation Patterns
+
+This rule defines the standard patterns for implementing Data Access Objects (DAOs) in the FertilizerCommandCenter project based on the established patterns in [source/fertilizer_cmd_ctr/data/base_dao.py](mdc:source/fertilizer_cmd_ctr/data/base_dao.py), [source/fertilizer_cmd_ctr/data/category_dao.py](mdc:source/fertilizer_cmd_ctr/data/category_dao.py), and [source/fertilizer_cmd_ctr/data/business_info_dao.py](mdc:source/fertilizer_cmd_ctr/data/business_info_dao.py).
+
+## DAO Class Structure
+
+### Base Class Inheritance
+- All DAOs MUST inherit from [BaseDAO](mdc:source/fertilizer_cmd_ctr/data/base_dao.py)
+- Pass the model class and logger to `super().__init__(model_class, logger)`
+
+### Constructor Pattern
+```python
+class ExampleDAO(BaseDAO):
+    def __init__(self, logger):
+        super().__init__(ModelClass, logger)
+```
+
+## Database Operations Patterns
+
+### Using safe_execute()
+- ALWAYS use `self.safe_execute()` for database operations
+- Include descriptive operation names for logging
+- Set appropriate `default_return` values
+- Use `reraise_integrity=True` for operations that should expose constraint violations
+
+### Standard CRUD Operations
+
+#### Create Operations
+```python
+def add_entity(self, field1, field2):
+    validated_field1 = self.validate_string_field(field1, "field1")
+    validated_field2 = self.validate_numeric_field(field2, "field2")
+    
+    return self.safe_execute(
+        f"creating entity with field1 '{validated_field1}'",
+        lambda: ModelClass.create(field1=validated_field1, field2=validated_field2),
+        reraise_integrity=True
+    )
+```
+
+#### Read Operations
+- Use inherited `get_by_id()` method for single record retrieval
+- Use inherited `get_all()` method for multiple records with optional filtering
+- For custom queries, use `safe_execute()` with descriptive operation names
+
+#### Update Operations
+```python
+def update_entity(self, entity_id, field1, field2):
+    validated_field1 = self.validate_string_field(field1, "field1")
+    validated_field2 = self.validate_numeric_field(field2, "field2")
+    
+    return self.safe_execute(
+        f"updating entity ID {entity_id}",
+        lambda: ModelClass.update(field1=validated_field1, field2=validated_field2)
+                          .where(ModelClass.id == entity_id).execute(),
+        reraise_integrity=True
+    )
+```
+
+#### Delete Operations
+```python
+def delete_entity(self, entity_id):
+    result = self.safe_execute(
+        f"deleting entity ID {entity_id}",
+        lambda: ModelClass.delete().where(ModelClass.id == entity_id).execute(),
+        default_return=0,
+        reraise_integrity=False
+    )
+    
+    if result == 0:
+        raise Exception(f"Failed to delete entity ID {entity_id}")
+    
+    return result > 0
+```
+
+## Validation Patterns
+
+### String Field Validation
+- Use `self.validate_string_field(value, "field_name", max_length=None, required=True)`
+- Always validate before database operations
+- Set `required=False` for optional fields
+
+### Numeric Field Validation
+- Use `self.validate_numeric_field(value, "field_name", min_value=None, max_value=None, required=True)`
+- Validate ranges when appropriate
+
+### Custom Validation
+- Implement custom validation methods when needed
+- Follow naming pattern: `validate_<field_name>_field()`
+
+## Error Handling Patterns
+
+### Exception Handling
+- Let `safe_execute()` handle standard exceptions (DoesNotExist, IntegrityError)
+- Use `reraise_integrity=True` when callers should handle constraint violations
+- Use `reraise_integrity=False` for internal operations where constraint errors should be logged but not propagated
+
+### Custom Exception Raising
+- Raise specific exceptions for business logic failures
+- Use descriptive error messages that include relevant context (IDs, field values)
+
+## Complex Operations
+
+### Multi-Model Operations
+```python
+def complex_operation(self, param1, param2):
+    def operation_func():
+        # Perform multiple related database operations
+        related_model.delete().where(condition).execute()
+        rows_affected = MainModel.delete().where(condition).execute()
+        return rows_affected > 0
+    
+    return self.safe_execute(
+        "performing complex multi-model operation",
+        operation_func,
+        default_return=False,
+        reraise_integrity=False
+    )
+```
+
+### Initialization Operations
+- Follow the pattern from CategoryDAO.initialize_default_categories()
+- Use get_or_create() for idempotent initialization
+- Return tuple (success_bool, message_string) for initialization methods
+
+## Connection Management
+
+### Single Operations
+- Individual DAO methods automatically manage connections via BaseDAO
+- No manual connection management needed for single operations
+
+### Multiple Operations
+- Use connection context for multiple related operations:
+```python
+with dao.database.connection_context():
+    result1 = dao.method1()
+    result2 = dao.method2()
+```
+
+## Model Integration
+
+### Model References
+- Models MUST inherit from [BaseModel](mdc:source/model/base_model.py)
+- Models are automatically bound to the database via BaseModel.Meta.database
+- DAOs automatically use the model's database binding
+
+### Foreign Key Operations
+- When creating records with foreign keys, fetch the related model first:
+```python
+def create_with_foreign_key(self, parent_id, name):
+    def create_func():
+        parent_obj = ParentModel.get_by_id(parent_id)
+        return ChildModel.create(parent=parent_obj, name=name)
+    
+    return self.safe_execute(
+        f"creating child record for parent {parent_id}",
+        create_func,
+        reraise_integrity=True
+    )
+```
+
+## Documentation Standards
+
+### Method Documentation
+- Include comprehensive docstrings for all public methods
+- Document parameters, return values, and exceptions
+- Use clear, descriptive parameter names
+
+### Error Documentation
+- Document which exceptions can be raised
+- Explain when IntegrityError vs custom exceptions are used

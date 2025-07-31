@@ -1,0 +1,34 @@
+{
+    "files.exclude": {
+        "**/.cache": true,
+        "**/.git": true,
+        "**/.DS_Store": true,
+        "**/.cursorignore": true,
+        "OneDrive*": true,
+        "LibrePy_Reloader.log": true,
+        "*.librepy": true,
+        "*.ods": true,
+        "*.pyc": true,
+        "lo_instance": true,
+        ".~lock*": true
+    },
+    "python.analysis.typeCheckingMode": "off",
+    "python.analysis.diagnosticMode": "workspace",
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportMissingImports": "none",
+        "reportUndefinedVariable": "none",
+        "reportMissingModuleSource": "none",
+        "reportImportCycles": "none",
+        "reportUnusedImport": "none",
+        "reportUnusedVariable": "none",
+        "reportGeneralTypeIssues": "none",
+        "reportOptionalMemberAccess": "none",
+        "reportOptionalSubscript": "none",
+        "reportPrivateImportUsage": "none"
+    },
+    "python.analysis.exclude": ["**/*.librepy", "**/librepy/**"],
+    "python.linting.enabled": false,
+    "python.linting.pylintEnabled": false,
+    "python.linting.flake8Enabled": false,
+    "python.linting.mypyEnabled": false
+}

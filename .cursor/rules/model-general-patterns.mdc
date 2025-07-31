@@ -1,0 +1,144 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Generic Peewee Model Implementation Patterns
+
+This rule describes standard practices for defining database models when using the Peewee ORM (or another ORM with similar concepts).
+
+## Target Database Backend
+
+These patterns assume a **PostgreSQL** database. While most recommendations are portable, certain field types, constraints, and SQL snippets (e.g., `DEFAULT 1`, `CHECK` constraints) follow PostgreSQL syntax and semantics.
+
+## Core Principles
+
+1. **Single Source of Database Configuration**: All models inherit from a shared `BaseModel` that binds them to the active database instance.
+2. **Explicit Field Definitions**: Each column should use the Peewee field type that most accurately represents the underlying data.
+3. **Clear Relationship Mapping**: Foreign-key relationships must specify the target model, `backref`, and appropriate `on_delete` behavior.
+4. **Declarative Constraints & Indexes**: Use `Meta.indexes`, field-level options (`unique`, `null`, etc.), and `Meta.constraints` to express data integrity rules directly in the model definitions.
+
+## Base Class Pattern
+
+```python
+from peewee import Model
+from myapp.db import db  # the database instance
+
+class BaseModel(Model):
+    class Meta:
+        database = db
+```
+
+*Never override `Meta.database` in concrete models; rely on the inheritance chain instead.*
+
+## Typical Model Template
+
+```python
+class Example(BaseModel):
+    name = CharField()
+    description = CharField(null=True)
+    price = DecimalField(max_digits=10, decimal_places=2, null=True)
+    is_active = BooleanField(default=True)
+
+    class Meta:
+        table_name = "examples"
+```
+
+## Field Type Guidelines
+
+* **CharField** — short text values (optionally `null=True` or `unique=True`).
+* **TextField** — long text or blobs.
+* **IntegerField / BigIntegerField** — whole numbers.
+* **FloatField / DecimalField** — numeric values (use `DecimalField` when precision matters; set `max_digits` and `decimal_places`).
+* **BooleanField** — true/false values (always supply a default).
+* **DateField / DateTimeField** — temporal data.
+* **AutoField** — auto-incrementing primary keys (default on most databases).
+
+When a column is optional, set `null=True`. Use `default=` whenever a sensible default exists.
+
+## Foreign Key Patterns
+
+### Required Relationship
+```python
+class Child(BaseModel):
+    parent = ForeignKeyField(Parent, backref="children", on_delete="CASCADE")
+```
+
+### Optional Relationship
+```python
+class Attachment(BaseModel):
+    file_owner = ForeignKeyField(User, backref="attachments", null=True, on_delete="SET NULL")
+```
+
+Always choose an `on_delete` policy (`CASCADE`, `SET NULL`, `RESTRICT`, etc.) that matches business rules.
+
+## Indexes & Constraints
+
+```python
+class Transaction(BaseModel):
+    tx_hash = CharField(unique=True)
+    block_number = IntegerField()
+
+    class Meta:
+        table_name = "transactions"
+        indexes = (
+            (("block_number",), False),  # non-unique for faster look-ups
+        )
+```
+
+Composite uniqueness constraints:
+```python
+class Membership(BaseModel):
+    user = ForeignKeyField(User, backref="memberships")
+    group = ForeignKeyField(Group, backref="memberships")
+
+    class Meta:
+        table_name = "memberships"
+        indexes = (
+            (("user", "group"), True),  # prevent duplicate pairs
+        )
+```
+
+## Special Model Patterns
+
+### Singleton Table
+```python
+class AppConfig(BaseModel):
+    id = IntegerField(primary_key=True, constraints=[SQL("DEFAULT 1")])
+    setting_json = TextField()
+
+    class Meta:
+        table_name = "app_config"
+        constraints = [SQL("CHECK (id = 1)")]
+```
+
+### Association Table With Extra Data
+```python
+class OrderItem(BaseModel):
+    order = ForeignKeyField(Order, backref="items", on_delete="CASCADE")
+    product = ForeignKeyField(Product, backref="order_items", on_delete="CASCADE")
+    quantity = IntegerField(default=1)
+    unit_price = DecimalField(max_digits=10, decimal_places=2)
+
+    class Meta:
+        table_name = "order_items"
+        indexes = (
+            (("order", "product"), True),
+        )
+```
+
+## Naming Conventions
+
+* **Table names**: lowercase snake_case and plural (e.g., `users`, `order_items`).
+* **Field names**: lowercase snake_case. Foreign keys usually match the referenced model name (e.g., `user`, `parent`).
+* **Backrefs**: plural noun describing the collection (e.g., `orders`, `children`).
+
+## Best Practices
+
+1. Keep model files small and cohesive; group related models together.
+2. Encapsulate business-logic-heavy queries in DAOs or service classes, not in the model definitions.
+3. Use database migrations (e.g., Peewee `playhouse.migrate`) to evolve schemas safely.
+4. Write concise docstrings for complex models and non-obvious fields.
+5. Revisit indexes periodically based on query patterns and performance metrics.
+
+Adhering to these patterns results in clear, maintainable, and performant data layers across diverse projects.

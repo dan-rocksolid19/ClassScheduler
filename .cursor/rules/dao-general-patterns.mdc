@@ -1,0 +1,98 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Generic DAO Implementation Patterns
+
+This rule defines standard patterns for implementing Data Access Objects (DAOs) in Python projects that use the Peewee ORM (or an ORM with similar concepts).
+
+## Core Principles
+
+1. **Separation of Concerns**: DAOs encapsulate all direct database interactions, keeping business logic separate.
+2. **Model Binding**: DAOs should work with model classes that are already bound to a database. Do not create or manage standalone database objects inside DAO methods.
+3. **Safe Execution Wrapper**: All database calls must be wrapped in a helper such as `safe_execute()` that provides consistent error handling and logging.
+4. **Connection Management**: Respect the existing connection context. Open a new connection only when no connection is active, and reuse active connections within a `connection_context()` when performing multiple operations.
+
+## Base Class Structure
+
+```python
+class BaseDAO:
+    def __init__(self, model_class, logger):
+        self.model_class = model_class
+        self.logger = logger
+```
+
+* All concrete DAOs MUST inherit from `BaseDAO` (or an equivalent base class) and pass the model class along with a logger instance to `super().__init__()`.
+
+## Standard CRUD Operation Patterns
+
+### Create
+```python
+def add_entity(self, **fields):
+    return self.safe_execute(
+        "creating entity",
+        lambda: self.model_class.create(**fields),
+        reraise_integrity=True
+    )
+```
+
+### Read
+```python
+def get_by_id(self, entity_id):
+    return self.safe_execute(
+        f"fetching {self.model_class.__name__} ID {entity_id}",
+        lambda: self.model_class.get_by_id(entity_id)
+    )
+```
+
+### Update
+```python
+def update_entity(self, entity_id, **fields):
+    return self.safe_execute(
+        f"updating {self.model_class.__name__} ID {entity_id}",
+        lambda: self.model_class.update(**fields).where(self.model_class.id == entity_id).execute(),
+        reraise_integrity=True
+    )
+```
+
+### Delete
+```python
+def delete_entity(self, entity_id):
+    rows = self.safe_execute(
+        f"deleting {self.model_class.__name__} ID {entity_id}",
+        lambda: self.model_class.delete().where(self.model_class.id == entity_id).execute(),
+        default_return=0,
+        reraise_integrity=False
+    )
+    if rows == 0:
+        raise Exception(f"Failed to delete {self.model_class.__name__} ID {entity_id}")
+    return True
+```
+
+## Validation Helpers
+
+* **String Fields**: `validate_string_field(value, name, max_length=None, required=True)`
+* **Numeric Fields**: `validate_numeric_field(value, name, min_value=None, max_value=None, required=True)`
+
+Implement these helpers in `BaseDAO` so that all DAOs share the same validation logic.
+
+## Error Handling Guidelines
+
+1. **DoesNotExist**: Log at INFO level and return a default value (`None`, `[]`, or `0`).
+2. **IntegrityError**: Log at ERROR level. Reraise when the caller needs to handle constraint violations; otherwise, swallow and return a default value.
+3. **Unexpected Exceptions**: Log at ERROR level and return a safe default.
+
+## Complex Operations & Batch Queries
+
+* **Batch Retrieval**: Replace loops of individual `get_by_id()` calls with a single `select().where(Model.id.in_(ids))` query.
+* **Connection Context**: For sequences of related operations, wrap them in `with dao.database.connection_context():` to minimize the number of database connections.
+
+## Documentation Standards
+
+* Provide concise docstrings for all public DAO methods, documenting parameters, return values, and possible exceptions.
+* Use descriptive method names (`add_…`, `update_…`, `delete_…`) to indicate intent.
+
+---
+
+Following these patterns ensures consistent, maintainable, and efficient data access layers across projects.

@@ -1,0 +1,203 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# FertilizerCommandCenter Model Implementation Patterns
+
+This rule defines the standard patterns for implementing Peewee models in the FertilizerCommandCenter project based on [source/model/fertilizer_cmd_ctr.py](mdc:source/model/fertilizer_cmd_ctr.py) and [source/model/base_model.py](mdc:source/model/base_model.py).
+
+## Model Class Structure
+
+### Base Class Inheritance
+- All models MUST inherit from [BaseModel](mdc:source/model/base_model.py)
+- BaseModel automatically binds models to the database connection
+- Never override the Meta.database setting in individual models
+
+### Basic Model Pattern
+```python
+class ExampleModel(BaseModel):
+    field1 = CharField()
+    field2 = DecimalField(null=True, max_digits=10, decimal_places=2)
+    
+    class Meta:
+        table_name = 'example_models'
+```
+
+## Field Type Patterns
+
+### String Fields
+- Use `CharField()` for required string fields
+- Use `CharField(null=True)` for optional string fields
+- Use `CharField(unique=True)` for unique string fields
+- Examples: `name = CharField()`, `description = CharField(null=True)`
+
+### Numeric Fields
+- Use `DecimalField(max_digits=10, decimal_places=2)` for monetary/precise values
+- Use `FloatField()` for approximate numeric values
+- Use `IntegerField()` for whole numbers
+- Add `null=True` for optional numeric fields
+- Examples: `rate = DecimalField(null=True, max_digits=10, decimal_places=2)`
+
+### Boolean Fields
+- Use `BooleanField(default=False)` or `BooleanField(default=True)`
+- Always provide explicit default values
+- Example: `is_active = BooleanField(default=True)`
+
+### Date Fields
+- Use `DateField()` for date-only fields
+- Use `DateTimeField()` for timestamp fields
+- Add `null=True` if optional
+- Example: `job_date = DateField()`
+
+### Primary Key Fields
+- Use auto-incrementing primary keys by default (inherited from BaseModel)
+- For custom primary keys: `id = IntegerField(primary_key=True)`
+- For singleton models: `id = IntegerField(primary_key=True, constraints=[SQL('DEFAULT 1')])`
+
+## Foreign Key Patterns
+
+### Standard Foreign Keys
+```python
+class ChildModel(BaseModel):
+    parent = ForeignKeyField(ParentModel, backref='children')
+    
+    class Meta:
+        table_name = 'child_models'
+```
+
+### Optional Foreign Keys
+```python
+class ModelWithOptionalFK(BaseModel):
+    optional_parent = ForeignKeyField(ParentModel, backref='optional_children', null=True)
+    
+    class Meta:
+        table_name = 'models_with_optional_fk'
+```
+
+### Cascade Delete Foreign Keys
+```python
+class DependentModel(BaseModel):
+    owner = ForeignKeyField(OwnerModel, backref='dependents', on_delete='CASCADE')
+    
+    class Meta:
+        table_name = 'dependent_models'
+```
+
+## Index and Constraint Patterns
+
+### Unique Constraints
+- Single field: Use `unique=True` on the field
+- Multiple fields: Define in Meta.indexes
+```python
+class Meta:
+    table_name = 'example_models'
+    indexes = (
+        (('field1', 'field2'), True),  # True = unique index
+    )
+```
+
+### Non-Unique Indexes
+```python
+class Meta:
+    table_name = 'example_models'
+    indexes = (
+        (('field1',), False),  # False = non-unique index
+    )
+```
+
+### Database Constraints
+```python
+class SingletonModel(BaseModel):
+    id = IntegerField(primary_key=True, constraints=[SQL('DEFAULT 1')])
+    
+    class Meta:
+        table_name = 'singleton_model'
+        constraints = [SQL('CHECK (id = 1)')]  # Enforce singleton
+```
+
+## Naming Conventions
+
+### Table Names
+- Use lowercase with underscores: `table_name = 'job_batches'`
+- Use plural form for the table name
+- Be descriptive but concise
+
+### Field Names
+- Use lowercase with underscores for multi-word fields
+- Match database column naming conventions
+- Examples: `field_number`, `epa_reg_no`, `standard_rate_unit`
+
+### Foreign Key Field Names
+- Use the referenced model name in lowercase
+- For self-referencing or ambiguous relationships, add descriptive suffix
+- Examples: `category`, `parent`, `job_batch`
+
+### Backref Names
+- Use plural form of the child model name
+- Be descriptive about the relationship
+- Examples: `backref='subcategories'`, `backref='job_fields'`
+
+## Special Model Types
+
+### Singleton Models
+```python
+class BusinessInfo(BaseModel):
+    id = IntegerField(primary_key=True, constraints=[SQL('DEFAULT 1')])
+    business_name = CharField()
+    
+    class Meta:
+        table_name = 'business_info'
+        constraints = [SQL('CHECK (id = 1)')]
+```
+
+### Junction/Association Models
+```python
+class JobField(BaseModel):
+    job = ForeignKeyField(Job, backref='job_fields', on_delete='CASCADE')
+    field = ForeignKeyField(Field, backref='job_fields', on_delete='CASCADE')
+    
+    class Meta:
+        table_name = 'job_fields'
+        indexes = (
+            (('job', 'field'), True),  # Prevent duplicate associations
+        )
+```
+
+### Models with Additional Data
+```python
+class JobProduct(BaseModel):
+    job = ForeignKeyField(Job, backref='job_products', on_delete='CASCADE')
+    product = ForeignKeyField(Product, backref='job_products', on_delete='CASCADE')
+    rate = DecimalField(null=True, max_digits=10, decimal_places=2)
+    rate_unit = CharField(null=True)
+    
+    class Meta:
+        table_name = 'job_products'
+        indexes = (
+            (('job', 'product'), True),
+        )
+```
+
+## Best Practices
+
+### Field Definitions
+- Always consider whether fields should be nullable
+- Use appropriate field types for the data being stored
+- Define reasonable constraints (max_digits, decimal_places)
+- Use descriptive field names that match business terminology
+
+### Relationships
+- Always define backref names for foreign keys
+- Use CASCADE delete for dependent relationships
+- Consider the cardinality of relationships when designing
+
+### Performance Considerations
+- Add indexes for frequently queried fields
+- Create composite indexes for multi-field queries
+- Use appropriate field types to minimize storage overhead
+
+### Data Integrity
+- Use unique constraints to prevent duplicate data
+- Add check constraints for business rules when possible
+- Consider foreign key constraints carefully for data consistency

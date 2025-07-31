@@ -1,0 +1,1 @@
+THis is a guide for using our app library for creating a new project.

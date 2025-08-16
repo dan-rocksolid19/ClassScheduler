@@ -102,7 +102,7 @@ class DatabaseConfigManager(ConfigManager):
             tuple: (bool, str) - (success, message)
         """
         try:
-            from librepy.peewee.connection import test_connection
+            from librepy.database import test_connection
             params = self.get_connection_params()
             
             if not params:
@@ -121,7 +121,7 @@ class DatabaseConfigManager(ConfigManager):
             bool: True if configuration was saved, False if canceled
         """
         try:
-            from librepy.peewee.connection.db_dialog import DBDialog
+            from librepy.database.db_dialog import DBDialog
         except ImportError as e:
             import traceback
             logger.error(f"Critical: Failed to import DBDialog - {str(e)}")

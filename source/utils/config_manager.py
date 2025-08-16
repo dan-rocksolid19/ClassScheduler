@@ -8,6 +8,8 @@ from librepy.pybrex.values import APP_NAME
 logger = logging.getLogger(__name__)
 
 class ConfigManager:
+    _shared_parsers = {}
+
     def __init__(self, config_name, default_values=None):
         """Initialize a configuration manager.
 
@@ -20,7 +22,7 @@ class ConfigManager:
         self._config = None
         self._config_dir = None
         self._config_path = None
-        self._lock = threading.RLock()  # Thread-safe lock for config operations
+        self._lock = threading.RLock()
         self._missing_keys = set()
 
     @property
@@ -59,13 +61,16 @@ class ConfigManager:
         """
         with self._lock:
             try:
-                self._config = ConfigParser()
-                if os.path.exists(self.config_path):
-                    self._config.read(self.config_path)
+                if self.config_path in ConfigManager._shared_parsers:
+                    self._config = ConfigManager._shared_parsers[self.config_path]
                 else:
-                    logger.debug(f"Config file not found at: {self.config_path}")
-                    # Apply default values if file doesn't exist
-                    self._apply_defaults()
+                    self._config = ConfigParser()
+                    if os.path.exists(self.config_path):
+                        self._config.read(self.config_path)
+                    else:
+                        logger.debug(f"Config file not found at: {self.config_path}")
+                        self._apply_defaults()
+                    ConfigManager._shared_parsers[self.config_path] = self._config
                 return self._config
             except Exception as e:
                 logger.error(f"Error loading config: {str(e)}")
@@ -74,9 +79,20 @@ class ConfigManager:
     def reload_config(self):
         """Force reload configuration from disk by clearing cache."""
         with self._lock:
-            self._config = None
-            logger.debug("Configuration cache cleared, will reload from disk on next access")
-            return self.load_config()
+            if self.config_path in ConfigManager._shared_parsers:
+                parser = ConfigManager._shared_parsers[self.config_path]
+                parser.clear()
+                if os.path.exists(self.config_path):
+                    parser.read(self.config_path)
+                else:
+                    self._apply_defaults()
+                self._config = parser
+                logger.debug("Configuration reloaded in place for all managers")
+                return self._config
+            else:
+                self._config = None
+                logger.debug("No shared parser found, loading config afresh")
+                return self.load_config()
 
     def save_config(self):
         """Save current configuration to file."""

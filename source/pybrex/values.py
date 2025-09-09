@@ -13,7 +13,7 @@ from configparser import ConfigParser
 PYBREX_NAME = 'Pybrex'
 PYBREX_VERSION = '1.0'
 PYBREX_ID = 'pybrex'
-APP_NAME = 'fertilizer'
+APP_NAME = 'app_name'
 
 
 def get_dir_path(path):
@@ -47,6 +47,7 @@ JASPER_REPORTS_DIR = os.path.join(os.path.split(PROGRAM_FILES)[0], 'jasper_repor
 
 GRAPHICS_DIR = os.path.join(PROGRAM_FILES, 'graphics')
 TOOLBAR_GRAPHICS_DIR = os.path.join(GRAPHICS_DIR, 'toolbar')
+SIDEBAR_GRAPHICS_DIR = os.path.join(GRAPHICS_DIR, 'sidebar')
 
 # Pybrex Color Scheme
 GRID_HEADER_BG_COLOR = 0x99ccff

@@ -15,131 +15,104 @@ For example, to import a file named config, use the following:
 from librepy import config
 '''
 
-import os
-import sys
 import traceback
-import uno
-import threading
 import time
-import logging
 from librepy.pybrex.values import pybrex_logger
-    
+from librepy.pybrex.msgbox import msgbox
+
 logger = pybrex_logger(__name__)
 
 def main(*args): 
     ''' Main method that is run when start is clicked in librepy '''
     logger.info("Main method started")
     try:
-        # Import this first to catch the potential exception
-        from librepy.peewee.connection.db_dialog import DBCanceledException
-        
+        # Obtain context first so LibrePy globals are available for dialogs
         ctx = getDefaultContext()
         smgr = ctx.getServiceManager()
 
-        # Check database configuration and run migrations
-        from librepy.peewee.db_migrations.migration_manager import run_all_migrations
-        migration_success = run_all_migrations(logger)
-        if not migration_success:
-            logger.error("Database migrations failed, aborting application startup")
-            return
+        # Use BootManager for synchronous initialization
+        from librepy.boot.boot_manager import BootManager, BootError
+        boot_manager = BootManager(ctx, smgr)
         
-        from librepy.fertilizer_cmd_ctr import main
-        logger.info("Initializing FertilizerCmdCtr")
-        fertilizer_cmd_ctr = main.FertilizerCmdCtr(ctx, smgr)
-        logger.info("FertilizerCmdCtr initialized successfully")
-    except DBCanceledException as e:
-        # Handle database cancellation gracefully
-        logger.info(f"Database setup canceled by user: {str(e)}")
-        # Don't show an error message - this is an expected path
-        return
+        try:
+            app = boot_manager.boot_application()
+            logger.info("App initialized successfully")
+            return app
+        except BootError as e:
+            boot_manager.handle_boot_failure(e)
+            return None
+            
     except Exception as e:
         logger.error(f"Error in main method: {str(e)}")
         logger.error(traceback.format_exc())
-        MsgBox(f"An error occurred while starting the application: {str(e)}")
+        msgbox(f"An error occurred while starting the application: {str(e)}", "Application Error")
+        return None
     
 myDocument = None
-_document_close_ready = False
-
 def startup(*args):
+    start_time = time.time()
     logger.info("Startup method called")
+    
+    global myDocument
+    myDocument = thisComponent
+    
     try:
-        # Import this first to catch the potential exception
-        from librepy.peewee.connection.db_dialog import DBCanceledException
-        from librepy.fertilizer_cmd_ctr.main import FertilizerCmdCtr
-        from librepy.jasper_report.jasper_report_manager import precopy_all_templates
-        global myDocument, _document_close_ready
-        
-        myDocument = thisComponent
-        precopy_all_templates()
+        # Obtain LibreOffice context first
+        ctx = getDefaultContext()
+        smgr = ctx.getServiceManager()
         logger.info("Document reference saved")
         
         try:
+            # Hide document window right away
             thisComponent.getCurrentController().getFrame().getContainerWindow().Visible = False
             logger.info("Document window hidden")
         except Exception as e:
             logger.error(f"Failed to hide document window: {str(e)}")
             logger.error(traceback.format_exc())
         
-        # Check database configuration BEFORE starting background thread
-        # This ensures the dialog shows in the main thread if needed
-        logger.info("Checking database configuration")
+        # Use BootManager for synchronous initialization
+        from librepy.boot.boot_manager import BootManager, BootError
+        boot_manager = BootManager(ctx, smgr)
+        
         try:
-            from librepy.peewee.connection.db_connection import get_database_connection
-            database = get_database_connection()
-            database.connect()
-            database.close()
-            logger.info("Database configuration verified successfully")
-        except DBCanceledException as e:
-            logger.info(f"Database setup canceled by user: {str(e)}")
-            close_file()
-            return
-        except Exception as e:
-            logger.error(f"Database configuration failed: {str(e)}")
-            close_file()
-            return
-        
-        # Get context and service manager
-        ctx = getDefaultContext()
-        smgr = ctx.getServiceManager()
-        
-        # Define a wrapper function that handles the main application logic
-        def run_app():
-            try:
-                # Run database migrations (should work now since config is verified)
-                from librepy.peewee.db_migrations.migration_manager import run_all_migrations
-                migration_success = run_all_migrations(logger)
-                if not migration_success:
-                    logger.error("Database migrations failed, aborting application startup")
-                    close_file()
-                    return
+            # Run complete boot sequence synchronously
+            logger.info("Starting synchronous boot sequence")
+            app = boot_manager.boot_application()
+            
+            # Store the app instance globally for cleanup
+            global app_instance
+            app_instance = app
+            
+            # Close document after successful initialization
+            if myDocument:
+                myDocument.close(True)
+                end_time = time.time()
+                duration = end_time - start_time
+                logger.info(f"Total initialization time: {duration:.2f} seconds")
+                logger.info("Document closed successfully")
+            else:
+                logger.warning("Document reference is None, cannot close")
                 
-                app = FertilizerCmdCtr(ctx, smgr)
-                # Set the flag when initialization is complete
-                global _document_close_ready
-                _document_close_ready = True
-                # Close the document once we're ready
-                close_file()
-            except Exception as e:
-                logger.error(f"Error in application thread: {str(e)}")
-                logger.error(traceback.format_exc())
-                close_file()
-                
-        # Start main application in a thread
-        logger.info("Starting FertilizerCmdCtr in a new thread")
-        threading.Thread(target=run_app).start()
+        except BootError as e:
+            # Handle boot failure gracefully
+            boot_manager.handle_boot_failure(e)
+            if myDocument:
+                myDocument.close(True)
+            return None
         
-    except DBCanceledException as e:
-        # Handle database cancellation gracefully
-        logger.info(f"Database setup canceled by user: {str(e)}")
-        close_file()
     except Exception as e:
         logger.error(f"Error in startup method: {str(e)}")
         logger.error(traceback.format_exc())
-        close_file()
+        try:
+            msgbox(f"Critical error during application startup: {str(e)}", "Application Error")
+        except:
+            pass
+        if myDocument:
+            myDocument.close(True)
+        return None
     
 def close_file(*args):
     logger.info("Attempting to close document")
-    time.sleep(0.2)
     try:
         if myDocument:
             myDocument.close(True)
@@ -149,7 +122,5 @@ def close_file(*args):
     except Exception as e:
         logger.error(f"Error closing document: {str(e)}")
         logger.error(traceback.format_exc())
-    
-    
-    
+ 
     

@@ -49,7 +49,7 @@ def get_database_connection(force_reinitialize: bool = False):
 def _bind_models_to_db(db):
     logger.debug("Binding models to database")
     import inspect
-    import librepy.model.model as model_module
+    from librepy.peewee.db_model import model as model_module
     from librepy.peewee.db_model.base_model import BaseModel
 
     # Dynamically find all classes that inherit from BaseModel

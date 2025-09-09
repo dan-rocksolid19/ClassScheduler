@@ -10,7 +10,7 @@ This file provides concise examples for quick reference when using BaseDAO conne
 
 def simple_pattern():
     """Use for single operations - DAO handles connections automatically"""
-    from librepy.fertilizer_cmd_ctr.data.business_info_dao import BusinessInfoDAO
+    from librepy.app.data.business_info_dao import BusinessInfoDAO
     from librepy.pybrex.values import pybrex_logger
     
     logger = pybrex_logger(__name__)
@@ -31,7 +31,7 @@ def simple_pattern():
 
 def efficient_pattern():
     """Use for multiple operations - share single connection for efficiency"""
-    from librepy.fertilizer_cmd_ctr.data.business_info_dao import BusinessInfoDAO
+    from librepy.app.data.business_info_dao import BusinessInfoDAO
     from librepy.pybrex.values import pybrex_logger
     
     logger = pybrex_logger(__name__)
@@ -53,7 +53,7 @@ def efficient_pattern():
 
 def service_layer_pattern():
     """Service method with multiple database operations"""
-    from librepy.fertilizer_cmd_ctr.data.business_info_dao import BusinessInfoDAO
+    from librepy.app.data.business_info_dao import BusinessInfoDAO
     from librepy.pybrex.values import pybrex_logger
     
     def update_business_profile(profile_data):
@@ -137,7 +137,7 @@ class UIComponentPattern:
     """Example UI component using optimal DAO patterns"""
     
     def __init__(self):
-        from librepy.fertilizer_cmd_ctr.data.business_info_dao import BusinessInfoDAO
+        from librepy.app.data.business_info_dao import BusinessInfoDAO
         from librepy.pybrex.values import pybrex_logger
         
         logger = pybrex_logger(__name__)
@@ -176,8 +176,8 @@ def prefetch_pattern():
     When returning model instances that might have their relations accessed 
     after the database connection is closed, use prefetch() to pre-load them.
     """
-    from librepy.fertilizer_cmd_ctr.data.product_list_dao import ProductListDAO
-    from librepy.fertilizer_cmd_ctr.data.category_dao import CategoryDAO
+    from librepy.app.data.product_list_dao import ProductListDAO
+    from librepy.app.data.category_dao import CategoryDAO
     from librepy.peewee.peewee import prefetch
     from librepy.pybrex.values import pybrex_logger
     
@@ -249,7 +249,7 @@ def prefetch_pattern():
 
 # ✅ GOOD: Simple single operation
 def good_single():
-    from librepy.fertilizer_cmd_ctr.data.business_info_dao import BusinessInfoDAO
+    from librepy.app.data.business_info_dao import BusinessInfoDAO
     from librepy.pybrex.values import pybrex_logger
     
     dao = BusinessInfoDAO(pybrex_logger(__name__))
@@ -257,7 +257,7 @@ def good_single():
 
 # ✅ GOOD: Multiple operations with context
 def good_multiple():
-    from librepy.fertilizer_cmd_ctr.data.business_info_dao import BusinessInfoDAO
+    from librepy.app.data.business_info_dao import BusinessInfoDAO
     from librepy.pybrex.values import pybrex_logger
     
     dao = BusinessInfoDAO(pybrex_logger(__name__))
@@ -268,7 +268,7 @@ def good_multiple():
 
 # ❌ INEFFICIENT: Multiple operations without context
 def inefficient_multiple():
-    from librepy.fertilizer_cmd_ctr.data.business_info_dao import BusinessInfoDAO
+    from librepy.app.data.business_info_dao import BusinessInfoDAO
     from librepy.pybrex.values import pybrex_logger
     
     dao = BusinessInfoDAO(pybrex_logger(__name__))

@@ -23,6 +23,7 @@ class Teacher(BaseModel):
 
 class TrainingSession(BaseModel):
     session_id = AutoField(primary_key=True)
+    name = CharField(max_length=45)
     session_date = DateField()
     session_time = TimeField()
     price = DecimalField(max_digits=10, decimal_places=2)

@@ -1,4 +1,4 @@
-from peewee.db_model.base_model import BaseModel
+from librepy.peewee.db_model.base_model import BaseModel
 from librepy.peewee.peewee import (
     Model,
     AutoField,

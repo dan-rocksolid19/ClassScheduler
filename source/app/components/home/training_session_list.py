@@ -55,6 +55,22 @@ class TrainingSessionList(ctr_container.Container):
             Label='Training Sessions', FontHeight=21, FontWeight=150
         )
 
+        # Top-right New Entry button (match calendar style)
+        try:
+            self.btn_new_entry = self.add_button(
+                'btn_new_entry',
+                pos['new_entry_x'], pos['top_button_y'], pos['top_button_width'], pos['top_button_height'],
+                Label='New Entry',
+                callback=self.create_session,
+                BackgroundColor=0x2C3E50,
+                TextColor=0xFFFFFF,
+                FontWeight=150,
+                FontHeight=12,
+                Border=6
+            )
+        except Exception as e:
+            self.logger.error(f"Failed creating New Entry button: {e}")
+
         # Search controls
         self.lbl_search = self.add_label(
             'lbl_search', pos['search_label_x'], pos['search_y'], 60, 14, Label='Search:'
@@ -214,6 +230,8 @@ class TrainingSessionList(ctr_container.Container):
                 self.lbl_search.setPosSize(pos['search_label_x'], pos['search_y'], 60, 14, POSSIZE)
             if hasattr(self, 'txt_search'):
                 self.txt_search.setPosSize(pos['search_x'], pos['search_y'], pos['search_w'], 14, POSSIZE)
+            if hasattr(self, 'btn_new_entry'):
+                self.btn_new_entry.setPosSize(pos['new_entry_x'], pos['top_button_y'], pos['top_button_width'], pos['top_button_height'], POSSIZE)
             if hasattr(self, 'grid'):
                 self.grid.setPosSize(pos['grid_x'], pos['grid_y'], pos['grid_w'], pos['grid_h'], POSSIZE)
 
@@ -228,9 +246,18 @@ class TrainingSessionList(ctr_container.Container):
         pad_x = int(self.window_width * 0.02)
         pad_y = int(self.window_height * 0.02)
         
+        # Top-right action button (match calendar metrics)
+        top_button_width = 140
+        top_button_height = 30
+        top_button_y = 20  # Align with title Y
+        right_margin = 50
+        new_entry_x = self.window_width - (top_button_width + right_margin)
+        
         # Title - align Y with calendar component (calendar title Y = 20)
         title_h = 40
-        title_w = min(360, self.window_width - 2 * pad_x)
+        # Ensure title doesn't collide with right button area
+        max_title_w = max(120, new_entry_x - pad_x - 10)
+        title_w = min(360, max_title_w)
         title_x = pad_x
         title_y = 20
         
@@ -254,6 +281,8 @@ class TrainingSessionList(ctr_container.Container):
             'search_label_x': search_label_x, 'search_y': search_y,
             'search_x': search_x, 'search_w': search_w,
             'grid_x': grid_x, 'grid_y': grid_y, 'grid_w': grid_w, 'grid_h': grid_h,
+            'new_entry_x': new_entry_x, 'top_button_y': top_button_y,
+            'top_button_width': top_button_width, 'top_button_height': top_button_height,
         }
 
     def dispose(self):

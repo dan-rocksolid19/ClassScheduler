@@ -52,7 +52,7 @@ class TrainingSessionList(ctr_container.Container):
         self.lbl_title = self.add_label(
             'lbl_title',
             pos['title_x'], pos['title_y'], pos['title_w'], pos['title_h'],
-            Label='Training Sessions', FontHeight=18, FontWeight=150
+            Label='Training Sessions', FontHeight=21, FontWeight=150
         )
 
         # Search controls
@@ -222,14 +222,14 @@ class TrainingSessionList(ctr_container.Container):
         pad_x = int(self.window_width * 0.02)
         pad_y = int(self.window_height * 0.02)
         
-        # Title
-        title_h = 24
+        # Title - align Y with calendar component (calendar title Y = 20)
+        title_h = 40
         title_w = min(360, self.window_width - 2 * pad_x)
         title_x = pad_x
-        title_y = pad_y
+        title_y = 20
         
-        # Search line sits clearly below the title to avoid overlap
-        search_y = title_y + title_h + 10
+        # Search controls - align Y with calendar month nav buttons (prev/next at Y = 95)
+        search_y = 95
         search_label_x = pad_x
         search_x = search_label_x + 60 + 6
         # Cap the search field width so it doesn't span the whole screen

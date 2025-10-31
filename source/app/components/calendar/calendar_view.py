@@ -564,29 +564,61 @@ class Calendar(ctr_container.Container):
         finally:
             self.entry_labels.clear()
 
-    def _render_single_entry(self, entry_name, title, x, y, w, h, row_index):
-        """Hook: Render a single entry control at the given position.
+    def _render_single_entry(self, entry_name, text, x, y, w, h, row_index, background_color=None):
+        """Render a single entry label and cache its base position.
         
-        Responsibility (for subclasses):
-        - Create a UI control for the entry (e.g., a label/pill) and add it to the container.
-        - Store a reference in self.entry_labels[entry_name] and cache base position in self._base_positions.
-        - Use the provided row_index for scroll visibility management.
-        
-        Base implementation: no-op; returns None and does not render controls.
+        Creates a pill-like label control, registers it in self.entry_labels,
+        and caches the base position in self._base_positions for scrolling.
+        Subclasses can override only if they need custom control creation.
         """
-        return None
+        # Default pastel if not provided
+        if background_color is None:
+            background_color = 0xD6EAF8
+        pill = self.add_label(
+            entry_name,
+            x, y, w, h,
+            Label=str(text or ''),
+            FontHeight=10,
+            FontWeight=150,
+            TextColor=0x222222,
+            BackgroundColor=background_color,
+            Border=0
+        )
+        self.entry_labels[entry_name] = pill
+        self._base_positions[entry_name] = (x, y, w, h, row_index)
+        return pill
 
     def _render_entries_for_day(self, date, x, base_y, cell_width, row_index):
-        """Hook: Render all entries for a specific date below the day label.
+        """Render all entries for a specific date below its day label.
         
-        Responsibility (for subclasses):
-        - For the given date, compute positions for all entries within the cell and call _render_single_entry.
-        - Use self.calendar_config values: day_label_height, entry_height, entry_spacing, entry_margin_x.
-        - Cache base positions in self._base_positions with row_index for smooth scrolling.
-        
-        Base implementation: no-op; does not render any entries.
+        Reads layout from self.calendar_config and renders entries from
+        self.calendar_data[YYYY-MM-DD]. Each entry should be a dict with at
+        least 'id' and 'title'; optional 'color' sets the background.
         """
-        return
+        cfg = self.calendar_config
+        day_label_height = cfg['day_label_height']
+        entry_height = cfg.get('entry_height', 24)
+        entry_spacing = cfg.get('entry_spacing', 4)
+        entry_margin_x = cfg.get('entry_margin_x', 4)
+
+        date_key = f"{date.year:04d}-{date.month:02d}-{date.day:02d}"
+        entries_for_day = self.calendar_data.get(date_key, [])
+        for idx, entry in enumerate(entries_for_day):
+            entry_name = f"pill_{date.day}{date.month}{date.year}_{entry.get('id')}"
+            pill_x = x + entry_margin_x
+            pill_y = base_y + day_label_height + entry_spacing + idx * (entry_height + entry_spacing)
+            pill_w = cell_width - 2 * entry_margin_x
+            pill_h = entry_height
+            self._render_single_entry(
+                entry_name,
+                entry.get('title'),
+                pill_x,
+                pill_y,
+                pill_w,
+                pill_h,
+                row_index,
+                entry.get('color', 0xD6EAF8)
+            )
 
     def _move_entries_in_view(self, visible_row_start, visible_row_end, offset_y):
         """Relocate/show/hide entry controls according to the scrolling window.

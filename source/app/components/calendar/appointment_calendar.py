@@ -61,7 +61,8 @@ class AppointmentCalendar(Calendar):
                     'id': a.get('id'),
                     'date': date_key,
                     'title': a.get('title'),
-                    'status': a.get('status')
+                    'status': a.get('status'),
+                    'color': 0xebb056,
                 }
                 grouped.setdefault(date_key, []).append(a_norm)
 
@@ -70,37 +71,3 @@ class AppointmentCalendar(Calendar):
             self.logger.error(f"Error loading service appointments: {e}")
             self.logger.error(traceback.format_exc())
             self.calendar_data = {}
-
-    def _render_single_entry(self, entry_name, title, x, y, w, h, row_index):
-        """Create a pill-like label control and cache its base position."""
-        pill = self.add_label(
-            entry_name,
-            x, y, w, h,
-            Label=str(title or ''),
-            FontHeight=10,
-            FontWeight=150,
-            TextColor=0x222222,
-            BackgroundColor=0xebf056,
-            Border=0
-        )
-        self.entry_labels[entry_name] = pill
-        self._base_positions[entry_name] = (x, y, w, h, row_index)
-        return pill
-
-    def _render_entries_for_day(self, date, x, base_y, cell_width, row_index):
-        """Render all appointment pills for a specific date."""
-        cfg = self.calendar_config
-        day_label_height = cfg['day_label_height']
-        entry_height = cfg.get('entry_height', 24)
-        entry_spacing = cfg.get('entry_spacing', 4)
-        entry_margin_x = cfg.get('entry_margin_x', 4)
-
-        date_key = f"{date.year:04d}-{date.month:02d}-{date.day:02d}"
-        appts_for_day = self.calendar_data.get(date_key, [])
-        for idx, appt in enumerate(appts_for_day):
-            pill_name = f"pill_{date.day}{date.month}{date.year}_{appt['id']}"
-            pill_x = x + entry_margin_x
-            pill_y = base_y + day_label_height + entry_spacing + idx * (entry_height + entry_spacing)
-            pill_w = cell_width - 2 * entry_margin_x
-            pill_h = entry_height
-            self._render_single_entry(pill_name, appt.get('title'), pill_x, pill_y, pill_w, pill_h, row_index)

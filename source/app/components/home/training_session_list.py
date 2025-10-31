@@ -101,6 +101,12 @@ class TrainingSessionList(ctr_container.Container):
                 if not r.get('id'):
                     # Build composite heading
                     r['id'] = f"{r.get('name','')}|{r.get('session_date','')}|{r.get('session_time','')}"
+                p = r.get('price', None)
+                if p is None or p == '':
+                    r['price'] = ''
+                else:
+                    # Convert to float then format with 2 decimals
+                    r['price'] = f"${float(p):.2f}"
             self._all_rows = data
 
             # Set to grid

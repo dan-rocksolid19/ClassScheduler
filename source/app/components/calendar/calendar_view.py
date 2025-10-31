@@ -33,15 +33,11 @@ class Calendar(ctr_container.Container):
         # Calendar data storage
         self.calendar_data = {}  # Will store jobs grouped by date
 
-        # Enhanced calendar configuration for label + job button layout
+        # Enhanced calendar configuration for calendar-only rendering (no jobs/events)
         self.calendar_config = {
             'cell_width': 140,           # Will be calculated dynamically based on available width
-            'day_label_height': 20,      # Small space for day number
-            'job_button_height': 24,     # Increased height for better readability
-            'job_button_spacing': 3,     # Increased spacing between job buttons
+            'day_label_height': 20,      # Space for day number
             'min_cell_height': 20,       # Minimum height (day label + padding)
-            'max_jobs_display': None,    # NO LIMIT - show all jobs
-            'job_font_size': 9,          # Increased font size for better readability
             'padding_x': int(ps[2] * 0.02),
             'padding_y': int(ps[3] * 0.02),
             'top_offset': self.toolbar_offset,
@@ -79,7 +75,6 @@ class Calendar(ctr_container.Container):
         # Calendar grid storage
         self.day_headers = {}    # Store day header labels (Sun, Mon, etc.)
         self.day_labels = {}     # Store day label controls
-        self.calendar_buttons = {}  # Keep for compatibility, but will store job buttons
         
         # Scrollbar-related properties
         self.scroll_offset = 0
@@ -251,11 +246,9 @@ class Calendar(ctr_container.Container):
         grid_start_x = 40
         grid_start_y = 200
         
-        # Enhanced calendar dimensions for job buttons
+        # Calendar dimensions
         cell_width = self.calendar_config['cell_width']
         day_label_height = self.calendar_config['day_label_height']
-        job_button_height = self.calendar_config['job_button_height']
-        job_button_spacing = self.calendar_config['job_button_spacing']
         
         # Clear existing day headers
         for header_name, header in self.day_headers.items():
@@ -282,7 +275,7 @@ class Calendar(ctr_container.Container):
             )
             self.day_headers[header_name] = day_header
         
-        # Clear existing day labels and job buttons
+        # Clear existing day labels
         for lbl_name, lbl in self.day_labels.items():
             try:
                 lbl.dispose()
@@ -313,19 +306,11 @@ class Calendar(ctr_container.Container):
             current_week_top = grid_start_y + sum(row_heights[:week_num])
             week_max_height = self.calendar_config['min_cell_height']  # Start with minimum
             
-            # Track the maximum number of items (jobs + events) in this week
-            max_items_in_week = 0
-            
-            # First pass: create day labels and determine max items for this week
-            week_jobs_data = {}    # day_num -> jobs_for_day
-            week_events_data = {}  # day_num -> events_for_day
             for day_num in range(7):  # 7 days per week
                 day_index = week_num * 7 + day_num
                 if day_index < len(month_days):
                     date = month_days[day_index]
-                    date_str = date.strftime('%Y-%m-%d')
 
-            # Create day number row for this week
             day_label_y = current_week_top
             self.calendar_rows.append({
                 'y': day_label_y,
@@ -365,78 +350,25 @@ class Calendar(ctr_container.Container):
                     row_index = len(self.calendar_rows) - 1
                     self._base_positions[day_label_name] = (x, day_label_y, cell_width, day_label_height, row_index)
             
-            # Create item button rows (jobs + events) for this week
-            item_button_spacing = self.calendar_config['job_button_spacing']
-            item_button_height = self.calendar_config['job_button_height']
-
-            for item_row_index in range(max_items_in_week):
-                item_row_y = day_label_y + day_label_height + 1 + (item_row_index * (item_button_height + item_button_spacing))
-                
-                # Add this item row to calendar rows
-                self.calendar_rows.append({
-                    'y': item_row_y,
-                    'height': item_button_height,
-                    'week_num': week_num,
-                    'row_type': 'item_row',
-                    'job_row_index': item_row_index
-                })
-                
-                row_index = len(self.calendar_rows) - 1
-                
-                # Create items (jobs first, then events) for this row across all days
-                for day_num in range(7):
-                    day_index = week_num * 7 + day_num
-                    if day_index < len(month_days):
-                        date = month_days[day_index]
-                        x = grid_start_x + (day_num * cell_width)
-                        
-                        # Get jobs and events for this day
-                        jobs_for_day = week_jobs_data.get(day_num, [])
-                        events_for_day = week_events_data.get(day_num, [])
-                        
-                        # Jobs have priority - show them first
-                        if item_row_index < len(jobs_for_day):
-                            job = jobs_for_day[item_row_index]
-                            self.create_single_job_button(date, job, x, item_row_y, cell_width, item_button_height, item_row_index, row_index)
-                        else:
-                            # Show events after jobs
-                            event_index = item_row_index - len(jobs_for_day)
-                            if event_index < len(events_for_day):
-                                event = events_for_day[event_index]
-                                self.create_single_event_button(date, event, x, item_row_y, cell_width, item_button_height, event_index, row_index)
-            
-            # Calculate total height for this week
-            week_total_height = day_label_height + 1 + (max_items_in_week * (item_button_height + item_button_spacing))
-            if max_items_in_week > 0:
-                week_total_height -= item_button_spacing  # Remove last spacing
-            
-            row_heights[week_num] = max(week_total_height, DEFAULT_WEEK_ROW_HEIGHT)
+            row_heights[week_num] = max(day_label_height, DEFAULT_WEEK_ROW_HEIGHT)
         
         # Store final row data
         self.row_heights = row_heights
         
         # Add extra empty rows at the end for better scrolling space
-        # This ensures there's always room to scroll past the last events
         if len(self.calendar_rows) > 0:
             last_row = self.calendar_rows[-1]
-            
-            # Add 3 extra empty rows for plenty of scrolling space
             for i in range(3):
-                extra_row_y = last_row['y'] + last_row['height'] + job_button_spacing + (i * (job_button_height + job_button_spacing))
-                
+                extra_row_y = last_row['y'] + last_row['height'] + (i * day_label_height)
                 self.calendar_rows.append({
                     'y': extra_row_y,
-                    'height': job_button_height,  # Same height as job buttons
+                    'height': day_label_height,
                     'week_num': 6 + i,  # Beyond normal weeks
                     'row_type': 'empty_row',
                     'job_row_index': -1
                 })
         
-        # Calculate scrollbar settings for row-by-row scrolling
-        # Reserve space at bottom equal to one job button height plus spacing for whitespace
-        job_button_height = self.calendar_config['job_button_height']
-        job_button_spacing = self.calendar_config['job_button_spacing']
-        bottom_whitespace = job_button_height + job_button_spacing
+        bottom_whitespace = self.calendar_config['day_label_height']
         visible_height = self.window_height - grid_start_y - 20 - bottom_whitespace
         
         # Calculate how many calendar rows can fit in visible area
@@ -601,8 +533,7 @@ class Calendar(ctr_container.Container):
             # (Create Event and Print Calendar buttons removed)
             
             # Update calendar grid (recreate with new dimensions)
-            if hasattr(self, 'calendar_buttons'):
-                self._create_calendar_grid()
+            self._create_calendar_grid()
             
             # Update scrollbar position and size
             if hasattr(self, 'scrollbar') and self.scrollbar:
@@ -669,22 +600,6 @@ class Calendar(ctr_container.Container):
                     pass
             self.day_labels.clear()
             
-            # Dispose job buttons
-            for date_str, buttons in self.job_buttons.items():
-                for button in buttons:
-                    try:
-                        button.dispose()
-                    except:
-                        pass
-            self.job_buttons.clear()
-            
-            # Dispose calendar buttons (job buttons are also stored here)
-            for btn_name, btn in self.calendar_buttons.items():
-                try:
-                    btn.dispose()
-                except:
-                    pass
-            self.calendar_buttons.clear()
             
             # Dispose scroll buttons
             if hasattr(self, 'btn_scroll_up') and self.btn_scroll_up is not None:
@@ -817,20 +732,6 @@ class Calendar(ctr_container.Container):
                     self.day_labels[label_name].setVisible(False)
                     controls_hidden += 1
         
-        # Move job buttons
-        for button_name in self.calendar_buttons.keys():
-            if button_name in self._base_positions:
-                x, y, w, h, row_index = self._base_positions[button_name]
-                
-                if visible_row_start <= row_index < visible_row_end:
-                    # Row is visible
-                    self.calendar_buttons[button_name].setPosSize(x, y + offset_y, w, h, POSSIZE)
-                    self.calendar_buttons[button_name].setVisible(True)
-                    controls_moved += 1
-                else:
-                    # Row is hidden
-                    self.calendar_buttons[button_name].setVisible(False)
-                    controls_hidden += 1
         
         self.logger.debug(f"Moved {controls_moved} controls, hidden {controls_hidden} controls")
         

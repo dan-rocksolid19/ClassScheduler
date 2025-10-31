@@ -20,30 +20,19 @@ class Calendar(ctr_container.Container):
         self.smgr = smgr         
         self.frame = frame        
         self.ps = ps             
-        self.db_manager = ""
         self.listeners = Listeners()
         self.logger = parent.logger
         self.logger.info("Calendar Page initialized")
-        
-        # Initialize JobDAO for calendar data
-        self.job_dao = None
-        
-        # Initialize EventsDAO for calendar events
-        self.events_dao = None
-        
+
         # Add toolbar offset
         self.toolbar_offset = 0
         
         # Calendar state
         self.current_date = datetime.now()
-        self.selected_crew = "All"
-        
+
         # Calendar data storage
         self.calendar_data = {}  # Will store jobs grouped by date
-        self.events_data = {}    # Will store events grouped by date
-        self.job_buttons = {}    # Will store job button controls by date
-        self.event_buttons = {}  # Will store event button controls by date
-        
+
         # Enhanced calendar configuration for label + job button layout
         self.calendar_config = {
             'cell_width': 140,           # Will be calculated dynamically based on available width
@@ -300,32 +289,7 @@ class Calendar(ctr_container.Container):
             except:
                 pass
         self.day_labels.clear()
-        
-        for btn_name, btn in self.calendar_buttons.items():
-            try:
-                btn.dispose()
-            except:
-                pass
-        self.calendar_buttons.clear()
-        
-        # Clear existing job buttons storage
-        for date_str, buttons in self.job_buttons.items():
-            for button in buttons:
-                try:
-                    button.dispose()
-                except:
-                    pass
-        self.job_buttons.clear()
-        
-        # Clear existing event buttons storage
-        for date_str, buttons in self.event_buttons.items():
-            for button in buttons:
-                try:
-                    button.dispose()
-                except:
-                    pass
-        self.event_buttons.clear()
-        
+
         # Generate calendar data
         cal = calendar.Calendar(6)  # Start week on Sunday
         month_days = list(cal.itermonthdates(self.current_date.year, self.current_date.month))
@@ -360,16 +324,7 @@ class Calendar(ctr_container.Container):
                 if day_index < len(month_days):
                     date = month_days[day_index]
                     date_str = date.strftime('%Y-%m-%d')
-                    jobs_for_day = self.calendar_data.get(date_str, [])
-                    events_for_day = self.events_data.get(date_str, [])
-                    week_jobs_data[day_num] = jobs_for_day
-                    week_events_data[day_num] = events_for_day
-                    
-                    # Total items = jobs first (priority), then events
-                    total_items = len(jobs_for_day) + len(events_for_day)
-                    if total_items > max_items_in_week:
-                        max_items_in_week = total_items
-            
+
             # Create day number row for this week
             day_label_y = current_week_top
             self.calendar_rows.append({
@@ -413,7 +368,7 @@ class Calendar(ctr_container.Container):
             # Create item button rows (jobs + events) for this week
             item_button_spacing = self.calendar_config['job_button_spacing']
             item_button_height = self.calendar_config['job_button_height']
-            
+
             for item_row_index in range(max_items_in_week):
                 item_row_y = day_label_y + day_label_height + 1 + (item_row_index * (item_button_height + item_button_spacing))
                 

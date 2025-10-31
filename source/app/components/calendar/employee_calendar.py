@@ -3,6 +3,7 @@ from librepy.app.data.dao.employee_contract_dao import EmployeeContractDAO
 import calendar as py_calendar
 import traceback
 from datetime import timedelta
+import colorsys
 
 
 class EmployeeCalendar(Calendar):
@@ -25,7 +26,7 @@ class EmployeeCalendar(Calendar):
     def load_calendar_data(self):
         """Load employee contracts overlapping the visible month and expand to daily entries.
 
-        Populates: self.calendar_data = { 'YYYY-MM-DD': [ {id, date, title, status}, ... ] }
+        Populates: self.calendar_data = { 'YYYY-MM-DD': [ {id, date, title, status, color}, ... ] }
         """
         try:
             cal = py_calendar.Calendar(6)  # Sunday-first
@@ -39,6 +40,27 @@ class EmployeeCalendar(Calendar):
 
             dao = EmployeeContractDAO(self.logger)
             contracts = dao.get_contracts_between(visible_start, visible_end)
+
+            # Build distinct contract id list
+            distinct_ids = []
+            for c in contracts or []:
+                cid = c.get('id')
+                if cid is not None and cid not in distinct_ids:
+                    distinct_ids.append(cid)
+
+            # Generate a simple HSL palette sized to distinct contracts
+            def hsl_color(i, n, s=0.6, l=0.6):
+                if n <= 0:
+                    return 0x6aa7d8  # fallback blue
+                h = (i % n) / float(n)
+                r, g, b = colorsys.hls_to_rgb(h, l, s)  # note: colorsys uses HLS
+                R = int(round(r * 255))
+                G = int(round(g * 255))
+                B = int(round(b * 255))
+                return (R << 16) | (G << 8) | B
+
+            n = len(distinct_ids)
+            color_map = {cid: hsl_color(idx, n) for idx, cid in enumerate(distinct_ids)}
 
             grouped = {}
             for c in contracts or []:
@@ -68,15 +90,19 @@ class EmployeeCalendar(Calendar):
                         pass
                 title = ' '.join(filter(None, title_parts)) or c.get('title') or 'Contract'
 
+                contract_id = c.get('id')
+                bg_color = color_map.get(contract_id, 0x6aa7d8)
+
                 # Emit one entry per day
                 current = start_day
                 while current <= end_day:
                     date_key = f"{current.year:04d}-{current.month:02d}-{current.day:02d}"
                     grouped.setdefault(date_key, []).append({
-                        'id': c.get('id'),
+                        'id': contract_id,
                         'date': date_key,
                         'title': title,
-                        'status': c.get('status', 'active')
+                        'status': c.get('status', 'active'),
+                        'color': bg_color,
                     })
                     current += timedelta(days=1)
 
@@ -86,7 +112,7 @@ class EmployeeCalendar(Calendar):
             self.logger.error(traceback.format_exc())
             self.calendar_data = {}
 
-    def _render_single_entry(self, entry_name, title, x, y, w, h, row_index):
+    def _render_single_entry(self, entry_name, title, x, y, w, h, row_index, bg_color=None):
         """Create a pill-like label control and cache its base position."""
         pill = self.add_label(
             entry_name,
@@ -95,7 +121,7 @@ class EmployeeCalendar(Calendar):
             FontHeight=10,
             FontWeight=150,
             TextColor=0x222222,
-            BackgroundColor=0x6aa7d8,  # blue-ish for contracts
+            BackgroundColor=bg_color,
             Border=0
         )
         self.entry_labels[entry_name] = pill
@@ -118,4 +144,13 @@ class EmployeeCalendar(Calendar):
             pill_y = base_y + day_label_height + entry_spacing + idx * (entry_height + entry_spacing)
             pill_w = cell_width - 2 * entry_margin_x
             pill_h = entry_height
-            self._render_single_entry(pill_name, entry.get('title'), pill_x, pill_y, pill_w, pill_h, row_index)
+            self._render_single_entry(
+                pill_name,
+                entry.get('title'),
+                pill_x,
+                pill_y,
+                pill_w,
+                pill_h,
+                row_index,
+                entry.get('color')
+            )

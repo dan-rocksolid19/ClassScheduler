@@ -65,21 +65,6 @@ class TrainingSessionsCalendar(Calendar):
             self.logger.error(traceback.format_exc())
             self.calendar_data = {}
 
-    def _clear_entries(self):
-        """Dispose and clear all rendered training session controls/pills."""
-        try:
-            for name, ctrl in list(self.entry_labels.items()):
-                try:
-                    ctrl.dispose()
-                except Exception:
-                    pass
-                if name in self._base_positions:
-                    try:
-                        del self._base_positions[name]
-                    except Exception:
-                        pass
-        finally:
-            self.entry_labels.clear()
 
     def _render_single_entry(self, entry_name, title, x, y, w, h, row_index):
         """Create a pill-like label control and cache its base position."""
@@ -115,18 +100,3 @@ class TrainingSessionsCalendar(Calendar):
             pill_h = entry_height
             self._render_single_entry(pill_name, session.get('title'), pill_x, pill_y, pill_w, pill_h, row_index)
 
-    def _move_entries_in_view(self, visible_row_start, visible_row_end, offset_y):
-        """Relocate/show/hide entry pills according to scrolling window."""
-        controls_moved = 0
-        controls_hidden = 0
-        for ctrl_name, ctrl in self.entry_labels.items():
-            if ctrl_name in self._base_positions:
-                x, y, w, h, row_index = self._base_positions[ctrl_name]
-                if visible_row_start <= row_index < visible_row_end:
-                    ctrl.setPosSize(x, y + offset_y, w, h, POSSIZE)
-                    ctrl.setVisible(True)
-                    controls_moved += 1
-                else:
-                    ctrl.setVisible(False)
-                    controls_hidden += 1
-        return controls_moved, controls_hidden

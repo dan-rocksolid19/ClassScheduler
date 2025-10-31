@@ -504,19 +504,28 @@ class Calendar(ctr_container.Container):
         
         Base implementation: no-op, leaves self.calendar_data unchanged (or empty).
         """
-        # No-op in base
         return
 
     def _clear_entries(self):
-        """Hook: Clear rendered entries.
+        """Dispose and clear all rendered entry controls and their cached positions.
         
-        Responsibility (for subclasses):
-        - Dispose/remove any previously created entry controls.
-        - Clear related caches in self._base_positions.
-        
-        Base implementation: no-op. The base does not render any entries.
+        Default implementation works for any subclass that registers controls in
+        self.entry_labels and caches their base positions in self._base_positions
+        as (x, y, w, h, row_index).
         """
-        return
+        try:
+            for name, ctrl in list(self.entry_labels.items()):
+                try:
+                    ctrl.dispose()
+                except Exception:
+                    pass
+                if name in self._base_positions:
+                    try:
+                        del self._base_positions[name]
+                    except Exception:
+                        pass
+        finally:
+            self.entry_labels.clear()
 
     def _render_single_entry(self, entry_name, title, x, y, w, h, row_index):
         """Hook: Render a single entry control at the given position.
@@ -543,15 +552,24 @@ class Calendar(ctr_container.Container):
         return
 
     def _move_entries_in_view(self, visible_row_start, visible_row_end, offset_y):
-        """Hook: Show/hide/move entries for scrolling based on cached positions.
+        """Relocate/show/hide entry controls according to the scrolling window.
         
-        Responsibility (for subclasses):
-        - Using self._base_positions and self.entry_labels, reposition visible entries and hide others.
-        - Return a tuple (moved_count, hidden_count).
-        
-        Base implementation: no-op; returns (0, 0).
+        Returns:
+            (moved_count, hidden_count)
         """
-        return 0, 0
+        controls_moved = 0
+        controls_hidden = 0
+        for ctrl_name, ctrl in self.entry_labels.items():
+            if ctrl_name in self._base_positions:
+                x, y, w, h, row_index = self._base_positions[ctrl_name]
+                if visible_row_start <= row_index < visible_row_end:
+                    ctrl.setPosSize(x, y + offset_y, w, h, POSSIZE)
+                    ctrl.setVisible(True)
+                    controls_moved += 1
+                else:
+                    ctrl.setVisible(False)
+                    controls_hidden += 1
+        return controls_moved, controls_hidden
 
     def show(self):
         # Load calendar data first

@@ -17,7 +17,7 @@ class TrainingSessionsCalendar(Calendar):
     component_name = 'calendar'
 
     def __init__(self, parent, ctx, smgr, frame, ps):
-        super().__init__(parent, ctx, smgr, frame, ps)
+        super().__init__(parent, ctx, smgr, frame, ps, title="Training Sessions")
 
     # ------------------------------
     # Hook implementations

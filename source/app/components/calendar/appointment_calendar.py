@@ -16,7 +16,7 @@ class AppointmentCalendar(Calendar):
     component_name = 'appointment_calendar'
 
     def __init__(self, parent, ctx, smgr, frame, ps):
-        super().__init__(parent, ctx, smgr, frame, ps)
+        super().__init__(parent, ctx, smgr, frame, ps, title="Service Appointments")
 
     # ------------------------------
     # Hook implementations

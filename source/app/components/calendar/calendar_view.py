@@ -14,7 +14,7 @@ DEFAULT_WEEK_ROW_HEIGHT = 130  # Fixed height per week row (will become dynamic)
 class Calendar(ctr_container.Container):
     component_name = 'calendar'
 
-    def __init__(self, parent, ctx, smgr, frame, ps):
+    def __init__(self, parent, ctx, smgr, frame, ps, title="Calendar"):
         self.parent = parent          
         self.ctx = ctx            
         self.smgr = smgr         
@@ -23,6 +23,7 @@ class Calendar(ctr_container.Container):
         self.listeners = Listeners()
         self.logger = parent.logger
         self.logger.info("Calendar Page initialized")
+        self._title_text = title
 
         # Add toolbar offset
         self.toolbar_offset = 0
@@ -127,8 +128,8 @@ class Calendar(ctr_container.Container):
         # Title
         self.lbl_title = self.add_label(
             "lblTitle", 
-            40, 20, 200, 40, 
-            Label="Calendar", 
+            40, 20, 360, 40, 
+            Label=self._title_text, 
             FontHeight=21, 
             FontWeight=150, 
             FontName='Sans-serif'

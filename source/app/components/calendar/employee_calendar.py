@@ -18,7 +18,7 @@ class EmployeeCalendar(Calendar):
     component_name = 'employee_calendar'
 
     def __init__(self, parent, ctx, smgr, frame, ps):
-        super().__init__(parent, ctx, smgr, frame, ps)
+        super().__init__(parent, ctx, smgr, frame, ps, title="Employee Contracts")
 
     # ------------------------------
     # Hook implementations

@@ -7,6 +7,7 @@ import traceback
 import calendar
 from datetime import datetime, timedelta
 #Import DAOs here
+from librepy.app.data.dao.training_session_dao import TrainingSessionDAO
 
 # Calendar configuration constants
 DEFAULT_WEEK_ROW_HEIGHT = 130  # Fixed height per week row (will become dynamic)
@@ -75,6 +76,7 @@ class Calendar(ctr_container.Container):
         # Calendar grid storage
         self.day_headers = {}    # Store day header labels (Sun, Mon, etc.)
         self.day_labels = {}     # Store day label controls
+        self.session_labels = {} # Store training session label controls
         
         # Scrollbar-related properties
         self.scroll_offset = 0
@@ -283,6 +285,13 @@ class Calendar(ctr_container.Container):
                 pass
         self.day_labels.clear()
 
+        for ctrl_name, ctrl in self.session_labels.items():
+            try:
+                ctrl.dispose()
+            except:
+                pass
+        self.session_labels.clear()
+
         # Generate calendar data
         cal = calendar.Calendar(6)  # Start week on Sunday
         month_days = list(cal.itermonthdates(self.current_date.year, self.current_date.month))
@@ -349,6 +358,28 @@ class Calendar(ctr_container.Container):
                     # Cache day label position with row index
                     row_index = len(self.calendar_rows) - 1
                     self._base_positions[day_label_name] = (x, day_label_y, cell_width, day_label_height, row_index)
+
+                    date_key = f"{date.year:04d}-{date.month:02d}-{date.day:02d}"
+                    sessions_for_day = self.calendar_data.get(date_key, [])
+                    for idx, session in enumerate(sessions_for_day):
+                        pill_name = f"pill_{date.day}{date.month}{date.year}_{session['id']}"
+                        pill_x = x + 4
+                        pill_y = day_label_y + day_label_height + 2 + idx * 16
+                        pill_w = cell_width - 8
+                        pill_h = 14
+                        pill = self.add_label(
+                            pill_name,
+                            pill_x, pill_y, pill_w, pill_h,
+                            Label=str(session.get('title') or ''),
+                            FontHeight=9,
+                            FontWeight=100,
+                            TextColor=0x222222,
+                            BackgroundColor=0xEAF3FF,
+                            Border=1
+                        )
+                        self.session_labels[pill_name] = pill
+                        # Cache pill position with same row_index for visibility control
+                        self._base_positions[pill_name] = (pill_x, pill_y, pill_w, pill_h, row_index)
             
             row_heights[week_num] = max(day_label_height, DEFAULT_WEEK_ROW_HEIGHT)
         
@@ -487,8 +518,46 @@ class Calendar(ctr_container.Container):
         self._create_calendar_grid()
 
     def load_calendar_data(self):
-        """Load calendar events from database"""
-        pass
+        """Load calendar training sessions from database and group by date string."""
+        try:
+            # Build visible date range for the current month
+            cal = calendar.Calendar(6)
+            dates_iter = list(cal.itermonthdates(self.current_date.year, self.current_date.month))
+            if not dates_iter:
+                self.calendar_data = {}
+                return
+            start_day = dates_iter[0]
+            end_day = dates_iter[-1]
+
+            # Fetch sessions within range
+            dao = TrainingSessionDAO(self.logger)
+            sessions = dao.get_sessions_between(start_day, end_day)
+
+            # Normalize and group by YYYY-MM-DD
+            grouped = {}
+            for s in sessions or []:
+                dt = s.get('date')
+                if hasattr(dt, 'strftime'):
+                    date_key = dt.strftime('%Y-%m-%d')
+                elif isinstance(dt, str):
+                    date_key = dt
+                else:
+                    # Fallback: skip invalid
+                    continue
+                # Ensure normalized date string saved back
+                s_norm = {
+                    'id': s.get('id'),
+                    'date': date_key,
+                    'title': s.get('title'),
+                    'status': s.get('status')
+                }
+                grouped.setdefault(date_key, []).append(s_norm)
+
+            self.calendar_data = grouped
+        except Exception as e:
+            self.logger.error(f"Error loading calendar data: {e}")
+            self.logger.error(traceback.format_exc())
+            self.calendar_data = {}
 
     def show(self):
         # Load calendar data first
@@ -731,7 +800,17 @@ class Calendar(ctr_container.Container):
                     # Row is hidden
                     self.day_labels[label_name].setVisible(False)
                     controls_hidden += 1
-        
+
+        for ctrl_name in self.session_labels.keys():
+            if ctrl_name in self._base_positions:
+                x, y, w, h, row_index = self._base_positions[ctrl_name]
+                if visible_row_start <= row_index < visible_row_end:
+                    self.session_labels[ctrl_name].setPosSize(x, y + offset_y, w, h, POSSIZE)
+                    self.session_labels[ctrl_name].setVisible(True)
+                    controls_moved += 1
+                else:
+                    self.session_labels[ctrl_name].setVisible(False)
+                    controls_hidden += 1
         
         self.logger.debug(f"Moved {controls_moved} controls, hidden {controls_hidden} controls")
         

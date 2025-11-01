@@ -2,6 +2,7 @@ from librepy.app.components.calendar.calendar_view import Calendar
 from librepy.app.data.dao.service_appointment_dao import ServiceAppointmentDAO
 import calendar as py_calendar
 import traceback
+from .service_appt_dlg import ServiceAppointmentDialog
 
 
 class AppointmentCalendar(Calendar):
@@ -26,8 +27,13 @@ class AppointmentCalendar(Calendar):
         self.logger.info("Print requested (AppointmentCalendar) - not implemented yet")
 
     def on_new_entry(self, event):
-        """Subclass callback for New Entry button (placeholder)."""
-        self.logger.info("New Entry requested (AppointmentCalendar) - not implemented yet")
+        """Open the Service Appointment dialog (container-only)."""
+        try:
+            dlg = ServiceAppointmentDialog(self, self.ctx, self.smgr, self.frame, self.ps, Title="New Service Appointment")
+            dlg.execute()
+        except Exception as e:
+            self.logger.error(f"Failed to open Service Appointment dialog: {e}")
+            self.logger.error(traceback.format_exc())
 
     def load_calendar_data(self):
         """Load service appointments for the visible month into self.calendar_data.

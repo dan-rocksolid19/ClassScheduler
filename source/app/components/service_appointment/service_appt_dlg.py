@@ -58,37 +58,35 @@ class ServiceAppointmentDialog(dialog.DialogBase):
 
         # name
         self.add_label('LblName', x, y, self.lbl_width, self.LABEL_HEIGHT, Label='Name', **label_kwargs)
-        self.add_edit('EdtName', x + self.lbl_width, y - 2, self.field_width, self.FIELD_HEIGHT)
+        self.edt_name = self.add_edit('EdtName', x + self.lbl_width, y - 2, self.field_width, self.FIELD_HEIGHT)
         y += self.FIELD_HEIGHT + self.ROW_SPACING
 
         # phone #
         self.add_label('LblPhone', x, y, self.lbl_width, self.LABEL_HEIGHT, Label='Phone #', **label_kwargs)
-        self.add_edit('EdtPhone', x + self.lbl_width, y - 2, self.field_width, self.FIELD_HEIGHT)
+        self.edt_phone = self.add_edit('EdtPhone', x + self.lbl_width, y - 2, self.field_width, self.FIELD_HEIGHT)
         y += self.FIELD_HEIGHT + self.ROW_SPACING
 
         # email
         self.add_label('LblEmail', x, y, self.lbl_width, self.LABEL_HEIGHT, Label='Email', **label_kwargs)
-        self.add_edit('EdtEmail', x + self.lbl_width, y - 2, self.field_width, self.FIELD_HEIGHT)
+        self.edt_email = self.add_edit('EdtEmail', x + self.lbl_width, y - 2, self.field_width, self.FIELD_HEIGHT)
         y += self.FIELD_HEIGHT + self.ROW_SPACING
 
         # date
         self.add_label('LblDate', x, y, self.lbl_width, self.LABEL_HEIGHT, Label='Date', **label_kwargs)
-        self.add_date('EdtDate', x + self.lbl_width, y - 2, self.field_width, self.FIELD_HEIGHT)
+        self.edt_date = self.add_date('EdtDate', x + self.lbl_width, y - 2, self.field_width, self.FIELD_HEIGHT)
         y += self.FIELD_HEIGHT + self.ROW_SPACING
 
         # time
         self.add_label('LblTime', x, y, self.lbl_width, self.LABEL_HEIGHT, Label='Time', **label_kwargs)
-        self.add_time('EdtTime', x + self.lbl_width, y - 2, self.field_width, self.FIELD_HEIGHT)
+        self.edt_time = self.add_time('EdtTime', x + self.lbl_width, y - 2, self.field_width, self.FIELD_HEIGHT)
         y += self.FIELD_HEIGHT + self.ROW_SPACING
 
         # notes (multi-line)
         notes_height = 70
         self.add_label('LblNotes', x, y, self.lbl_width, self.LABEL_HEIGHT, Label='Notes', **label_kwargs)
-        self.add_edit('EdtNotes', x + self.lbl_width, y - 2, self.field_width, notes_height, MultiLine=True)
+        self.edt_notes = self.add_edit('EdtNotes', x + self.lbl_width, y - 2, self.field_width, notes_height, MultiLine=True)
         y += notes_height + self.ROW_SPACING
 
-        # Buttons line separator (optional minimal)
-        # Place buttons at bottom: Cancel (left), Save (right)
         btn_y = self.POS_SIZE[3] - self.MARGIN - self.BUTTON_HEIGHT
         btn_width = 80
 
@@ -96,8 +94,45 @@ class ServiceAppointmentDialog(dialog.DialogBase):
         self.add_cancel('BtnCancel', x, btn_y, btn_width, self.BUTTON_HEIGHT)
 
         # Save on the right
-        self.add_button('BtnSave', self.POS_SIZE[2] - self.MARGIN - btn_width, btn_y, btn_width, self.BUTTON_HEIGHT,
-                        Label='Save', DefaultButton=True, PushButtonType=1)
+        self.btn_save = self.add_button(
+            'BtnSave',
+            self.POS_SIZE[2] - self.MARGIN - btn_width,
+            btn_y,
+            btn_width,
+            self.BUTTON_HEIGHT,
+            Label='Save',
+            DefaultButton=False,
+        )
+        self.add_action_listener(self.btn_save, self._on_save)
+
+    def commit(self):
+        """Collect all field values into a dictionary and log it.
+        Returns the dictionary. This does not perform any persistence.
+        """
+        def _txt(ctrl):
+            try:
+                return ctrl.getText().strip()
+            except Exception:
+                return ''
+        data = {
+            'name': _txt(self.edt_name),
+            'phone': _txt(self.edt_phone),
+            'email': _txt(self.edt_email),
+            'date': _txt(self.edt_date),
+            'time': _txt(self.edt_time),
+            'notes': _txt(self.edt_notes)
+        }
+        self.logger.info(f"ServiceAppointmentDialog.commit -> {data}")
+        return data
+
+    def _on_save(self, event=None):
+        """Action listener for Save button: call commit to gather inputs and log them.
+        Keeps the dialog open; does not persist or close.
+        """
+        try:
+            self.commit()
+        except Exception as e:
+            self.logger.error(f"ServiceAppointmentDialog._on_save error: {e}")
 
     def _prepare(self):
         pass

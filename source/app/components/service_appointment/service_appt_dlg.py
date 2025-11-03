@@ -1,4 +1,5 @@
 from librepy.pybrex import dialog
+from librepy.pybrex.uno_date_time_converters import uno_date_to_python, uno_time_to_python
 
 
 class ServiceAppointmentDialog(dialog.DialogBase):
@@ -32,14 +33,14 @@ class ServiceAppointmentDialog(dialog.DialogBase):
         self.smgr = smgr
         self.frame = frame
         self.ps = ps
-        self.logger = getattr(parent, 'logger', None)
+        self.logger = parent.logger
 
         # Controls (optional references)
         self.lbl_width = None
         self.field_width = None
 
         # Pass the parent window (frame.window) to DialogBase for ownership/centering when available
-        parent_window = getattr(self.frame, 'window', None) if self.frame is not None else None
+        parent_window = self.frame.window if self.frame is not None else None
         super().__init__(ctx, self.parent, parent_window, **props)
 
     def _create(self):
@@ -73,12 +74,12 @@ class ServiceAppointmentDialog(dialog.DialogBase):
 
         # date
         self.add_label('LblDate', x, y, self.lbl_width, self.LABEL_HEIGHT, Label='Date', **label_kwargs)
-        self.edt_date = self.add_date('EdtDate', x + self.lbl_width, y - 2, self.field_width, self.FIELD_HEIGHT)
+        self.edt_date = self.add_date('EdtDate', x + self.lbl_width, y - 2, self.field_width, self.FIELD_HEIGHT, Dropdown=True)
         y += self.FIELD_HEIGHT + self.ROW_SPACING
 
-        # time
+        # time (picker)
         self.add_label('LblTime', x, y, self.lbl_width, self.LABEL_HEIGHT, Label='Time', **label_kwargs)
-        self.edt_time = self.add_time('EdtTime', x + self.lbl_width, y - 2, self.field_width, self.FIELD_HEIGHT)
+        self.edt_time = self.add_time('EdtTime', x + self.lbl_width, y - 2, self.field_width, self.FIELD_HEIGHT, Spin=True, StrictFormat=False, TimeFormat=2)
         y += self.FIELD_HEIGHT + self.ROW_SPACING
 
         # notes (multi-line)
@@ -106,33 +107,63 @@ class ServiceAppointmentDialog(dialog.DialogBase):
         self.add_action_listener(self.btn_save, self._on_save)
 
     def commit(self):
-        """Collect all field values into a dictionary and log it.
+        """Collect all field values into a dictionary using UNO date/time getters and log it.
         Returns the dictionary. This does not perform any persistence.
         """
         def _txt(ctrl):
-            try:
-                return ctrl.getText().strip()
-            except Exception:
-                return ''
+            return ctrl.getText().strip()
+
+        # Date via UNO getDate -> python date
+        py_date = None
+        udate = self.edt_date.getDate()
+        if udate and udate.Year > 0:
+            py_date = uno_date_to_python(udate)
+
+        # Time via UNO getTime -> python time, ignore 00:00:00
+        py_time = None
+        utime = self.edt_time.getTime()
+        if utime:
+            pt = uno_time_to_python(utime)
+            if pt and (pt.hour != 0 or pt.minute != 0 or pt.second != 0):
+                py_time = pt
+
         data = {
             'name': _txt(self.edt_name),
             'phone': _txt(self.edt_phone),
             'email': _txt(self.edt_email),
-            'date': _txt(self.edt_date),
-            'time': _txt(self.edt_time),
+            'date': py_date,
+            'time': py_time,
             'notes': _txt(self.edt_notes)
         }
+        data['service_apt_id'] = getattr(self, 'service_apt_id', None)
         self.logger.info(f"ServiceAppointmentDialog.commit -> {data}")
         return data
 
     def _on_save(self, event=None):
-        """Action listener for Save button: call commit to gather inputs and log them.
-        Keeps the dialog open; does not persist or close.
-        """
+        """Action listener for Save button: gather inputs and persist via service layer."""
         try:
-            self.commit()
-        except Exception as e:
-            self.logger.error(f"ServiceAppointmentDialog._on_save error: {e}")
+            from librepy.app.service.srv_appointment import save_service_appointment
+        except Exception:
+            # Fallback path if running directly without librepy package path
+            from app.service.srv_appointment import save_service_appointment  # type: ignore
+
+        raw = self.commit()  # {'name','phone','email','date','time','notes'}
+        payload = {
+            'service_apt_id': raw.get('service_apt_id'),  # may be None when creating
+            'name': raw.get('name'),
+            'phone': raw.get('phone'),
+            'email': raw.get('email'),
+            'date': raw.get('date'),
+            'time': raw.get('time'),
+            'notes': raw.get('notes'),
+        }
+        result = save_service_appointment(payload, context=self)
+        if result.get('ok'):
+            self.logger.info('Service appointment saved successfully')
+            self.end_execute(1)
+        else:
+            errors = result.get('errors') or []
+            self.logger.error(f"Failed to save service appointment: {errors}")
 
     def _prepare(self):
         pass

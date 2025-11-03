@@ -7,6 +7,43 @@ class ServiceAppointmentDAO(BaseDAO):
     def __init__(self, logger):
         super().__init__(ServiceAppointment, logger)
 
+    def create(self, name, phone_number, email, appointment_date, appointment_time, notes):
+        """Create a new ServiceAppointment and return the model instance."""
+        def _q():
+            return ServiceAppointment.create(
+                name=name,
+                phone_number=phone_number,
+                email=email,
+                appointment_date=appointment_date,
+                appointment_time=appointment_time,
+                notes=notes,
+            )
+        return self.safe_execute('create ServiceAppointment', _q, default_return=None)
+
+    def update(self, service_apt_id, name=None, phone_number=None, email=None,
+               appointment_date=None, appointment_time=None, notes=None):
+        """Update provided fields on ServiceAppointment and return the model instance."""
+        updates = {}
+        if name is not None:
+            updates['name'] = name
+        if phone_number is not None:
+            updates['phone_number'] = phone_number
+        if email is not None:
+            updates['email'] = email
+        if appointment_date is not None:
+            updates['appointment_date'] = appointment_date
+        if appointment_time is not None:
+            updates['appointment_time'] = appointment_time
+        if notes is not None:
+            updates['notes'] = notes
+
+        if updates:
+            self.update_fields(ServiceAppointment.service_apt_id == service_apt_id, updates, operation_name='update ServiceAppointment')
+        # Return the (possibly updated) instance
+        def _fetch():
+            return ServiceAppointment.get(ServiceAppointment.service_apt_id == service_apt_id)
+        return self.safe_execute('get ServiceAppointment after update', _fetch, default_return=None)
+
     def _row_to_dict(self, row):
         """Map ServiceAppointment row to required dict format."""
         try:

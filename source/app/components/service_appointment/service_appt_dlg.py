@@ -1,6 +1,7 @@
 from librepy.pybrex import dialog
 from librepy.pybrex.uno_date_time_converters import uno_date_to_python, uno_time_to_python, python_date_to_uno, python_time_to_uno
 from librepy.app.utils.utils import format_phone_for_display
+from librepy.pybrex.msgbox import msgbox, confirm_action
 
 
 class ServiceAppointmentDialog(dialog.DialogBase):
@@ -90,22 +91,46 @@ class ServiceAppointmentDialog(dialog.DialogBase):
         self.edt_notes = self.add_edit('EdtNotes', x + self.lbl_width, y - 2, self.field_width, notes_height, MultiLine=True)
         y += notes_height + self.ROW_SPACING
 
-        btn_y = self.POS_SIZE[3] - self.MARGIN - self.BUTTON_HEIGHT
+        # Buttons: choose layout based on mode (create vs edit)
+        if self.service_apt_id is None:
+            self._create_buttons_normal()
+        else:
+            self._create_buttons_edit()
+
+    # ---------- Buttons (centered group) ----------
+    def _create_buttons_normal(self):
+        """Create Cancel and Save buttons centered as a group."""
         btn_width = 80
+        gap = 10
+        count = 2
+        total_w = count * btn_width + (count - 1) * gap
+        dlg_w = self.POS_SIZE[2]
+        start_x = (dlg_w - total_w) // 2
+        btn_y = self.POS_SIZE[3] - self.MARGIN - self.BUTTON_HEIGHT
 
-        # Cancel on the left
-        self.add_cancel('BtnCancel', x, btn_y, btn_width, self.BUTTON_HEIGHT)
+        # Cancel (left)
+        self.add_cancel('BtnCancel', start_x, btn_y, btn_width, self.BUTTON_HEIGHT)
+        # Save (right)
+        self.btn_save = self.add_button('BtnSave', start_x + (btn_width + gap), btn_y, btn_width, self.BUTTON_HEIGHT, Label='Save', DefaultButton=False)
+        self.add_action_listener(self.btn_save, self._on_save)
 
-        # Save on the right
-        self.btn_save = self.add_button(
-            'BtnSave',
-            self.POS_SIZE[2] - self.MARGIN - btn_width,
-            btn_y,
-            btn_width,
-            self.BUTTON_HEIGHT,
-            Label='Save',
-            DefaultButton=False,
-        )
+    def _create_buttons_edit(self):
+        """Create Delete, Cancel, Save buttons centered as a group."""
+        btn_width = 80
+        gap = 10
+        count = 3
+        total_w = count * btn_width + (count - 1) * gap
+        dlg_w = self.POS_SIZE[2]
+        start_x = (dlg_w - total_w) // 2
+        btn_y = self.POS_SIZE[3] - self.MARGIN - self.BUTTON_HEIGHT
+
+        # Delete (far left)
+        self.btn_delete = self.add_button('BtnDelete', start_x, btn_y, btn_width, self.BUTTON_HEIGHT, Label='Delete')
+        self.add_action_listener(self.btn_delete, self._on_delete)
+        # Cancel (middle)
+        self.add_cancel('BtnCancel', start_x + (btn_width + gap), btn_y, btn_width, self.BUTTON_HEIGHT)
+        # Save (right)
+        self.btn_save = self.add_button('BtnSave', start_x + 2 * (btn_width + gap), btn_y, btn_width, self.BUTTON_HEIGHT, Label='Save', DefaultButton=False)
         self.add_action_listener(self.btn_save, self._on_save)
 
     def commit(self):
@@ -142,11 +167,7 @@ class ServiceAppointmentDialog(dialog.DialogBase):
 
     def _on_save(self, event=None):
         """Action listener for Save button: gather inputs and persist via service layer."""
-        try:
-            from librepy.app.service.srv_appointment import save_service_appointment
-        except Exception:
-            # Fallback path if running directly without librepy package path
-            from app.service.srv_appointment import save_service_appointment  # type: ignore
+        from librepy.app.service.srv_appointment import save_service_appointment
 
         raw = self.commit()  # {'name','phone','email','date','time','notes'}
         payload = {
@@ -164,7 +185,6 @@ class ServiceAppointmentDialog(dialog.DialogBase):
         else:
             errors = result.get('errors') or []
             self.logger.error(f"Failed to save service appointment: {errors}")
-            from librepy.pybrex.msgbox import msgbox
             if isinstance(errors, list) and errors:
                 lines = []
                 for e in errors:
@@ -179,6 +199,22 @@ class ServiceAppointmentDialog(dialog.DialogBase):
                 body = "Invalid input. Please correct the highlighted fields."
             msgbox(body, "Validation Error")
 
+    def _on_delete(self, event=None):
+        """Confirm deletion and delete the current service appointment."""
+        if self.service_apt_id is None:
+            return
+        from librepy.app.service.srv_appointment import delete_service_appointment
+
+        if not confirm_action("Are you sure you want to delete this appointment?", Title="Confirm Delete"):
+            return
+        res = delete_service_appointment(self.service_apt_id, context=self)
+        if res.get('ok'):
+            # Distinct return code for delete
+            self.end_execute(2)
+        else:
+            self.logger.error("Failed to delete service appointment")
+            msgbox("Failed to delete the appointment. Please try again.", "Delete Error")
+
     def _prepare(self):
         if self.service_apt_id is None:
             return
@@ -188,7 +224,7 @@ class ServiceAppointmentDialog(dialog.DialogBase):
         dao = ServiceAppointmentDAO(self.logger)
         rec = dao.get_by_id(self.service_apt_id)
         if not rec:
-            self.logg.info(f"ServiceAppointmentDialog._prepare: no record found for id={self.service_apt_id}")
+            self.logger.info(f"ServiceAppointmentDialog._prepare: no record found for id={self.service_apt_id}")
             return
         # Convert model instance to dict when needed
         if not isinstance(rec, dict):

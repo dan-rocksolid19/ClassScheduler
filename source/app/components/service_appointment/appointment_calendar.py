@@ -51,7 +51,7 @@ class AppointmentCalendar(Calendar):
 
             dlg = ServiceAppointmentDialog(self, self.ctx, self.smgr, self.frame, self.ps, Title="Edit Service Appointment", service_apt_id=entry_id)
             ret = dlg.execute()
-            if ret == 1:
+            if ret == 1 or ret == 2:
                 self._update_calendar()
         except Exception as e:
             self.logger.error(f"Failed to open Service Appointment for edit (id={entry_id}): {e}")

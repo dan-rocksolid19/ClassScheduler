@@ -55,21 +55,17 @@ class TrainingSessionList(ctr_container.Container):
             Label='Training Sessions', FontHeight=21, FontWeight=150
         )
 
-        # Top-right New Entry button (match calendar style)
-        try:
-            self.btn_new_entry = self.add_button(
-                'btn_new_entry',
-                pos['new_entry_x'], pos['top_button_y'], pos['top_button_width'], pos['top_button_height'],
-                Label='New Entry',
-                callback=self.create_session,
-                BackgroundColor=0x2C3E50,
-                TextColor=0xFFFFFF,
-                FontWeight=150,
-                FontHeight=12,
-                Border=6
-            )
-        except Exception as e:
-            self.logger.error(f"Failed creating New Entry button: {e}")
+        self.btn_new_entry = self.add_button(
+            'btn_new_entry',
+            pos['new_entry_x'], pos['top_button_y'], pos['top_button_width'], pos['top_button_height'],
+            Label='New Entry',
+            callback=self.create_session,
+            BackgroundColor=0x2C3E50,
+            TextColor=0xFFFFFF,
+            FontWeight=150,
+            FontHeight=12,
+            Border=6
+        )
 
         # Search controls
         self.lbl_search = self.add_label(

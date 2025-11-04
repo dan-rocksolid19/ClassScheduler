@@ -37,6 +37,7 @@ class MenubarManager(object):
                     sm(None, 'Divider'),
                     sm(3, '~Log Settings', 'p_log_settings', graphic='log-settings.png'),
                     sm(4, '~Database Settings', 'p_settings', graphic='database-settings2.png'),
+                    sm(5, '~Staff', 'p_staff', graphic='business-info.png'),
                 )),
                 m(1, '~About', None, (
                     sm(0, '~About', 'h_about', graphic='help-about.png'),
@@ -50,6 +51,7 @@ class MenubarManager(object):
             # Set app specific functions here
             fn['p_log_settings'] = self.log_settings
             fn['p_settings'] = self.settings
+            fn['p_staff'] = self.staff
             fn['h_about'] = self.show_about
             
             self.logger.info("MenubarManager: Function mappings created")
@@ -89,6 +91,12 @@ class MenubarManager(object):
         if dialog.execute():
             # Re-run bootstrap to ensure connection is refreshed and migrations are applied
             ensure_database_ready(self.logger)
+
+    def staff(self, *args):
+        """Show staff dialog"""
+        from librepy.app.components.settings.staff_dlg import StaffDialog
+        dlg = StaffDialog(self.ctx, self.parent, self.logger)
+        dlg.execute()
 
     def show_about(self, *args):
         """Show about dialog"""

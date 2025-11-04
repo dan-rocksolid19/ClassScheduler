@@ -37,6 +37,26 @@ class AppointmentCalendar(Calendar):
             self.logger.error(f"Failed to open Service Appointment dialog: {e}")
             self.logger.error(traceback.format_exc())
 
+    def on_entry_click(self, ev, entry_id=None):
+        """Handle clicks on an appointment entry: log id then open edit dialog.
+
+        Calls the base handler to log the id, then opens the ServiceAppointmentDialog
+        in edit mode by passing the id. Refreshes the calendar after a successful save.
+        """
+        try:
+            super().on_entry_click(ev, entry_id)
+
+            if entry_id is None:
+                return
+
+            dlg = ServiceAppointmentDialog(self, self.ctx, self.smgr, self.frame, self.ps, Title="Edit Service Appointment", service_apt_id=entry_id)
+            ret = dlg.execute()
+            if ret == 1:
+                self._update_calendar()
+        except Exception as e:
+            self.logger.error(f"Failed to open Service Appointment for edit (id={entry_id}): {e}")
+            self.logger.error(traceback.format_exc())
+
     def load_calendar_data(self):
         """Load service appointments for the visible month into self.calendar_data.
 

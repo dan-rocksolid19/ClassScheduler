@@ -1,5 +1,5 @@
 from librepy.pybrex import dialog
-from librepy.pybrex.uno_date_time_converters import uno_date_to_python, uno_time_to_python
+from librepy.pybrex.uno_date_time_converters import uno_date_to_python, uno_time_to_python, python_date_to_uno, python_time_to_uno
 
 
 class ServiceAppointmentDialog(dialog.DialogBase):
@@ -27,6 +27,9 @@ class ServiceAppointmentDialog(dialog.DialogBase):
         # Basic dialog appearance
         props['Title'] = props.get('Title', 'Service Appointment')
         props['BackgroundColor'] = props.get('BackgroundColor', 0xFFFFFF)
+
+        # Optional edit-mode id
+        self.service_apt_id = props.pop('service_apt_id', None)
 
         self.ctx = ctx
         self.parent = parent
@@ -135,8 +138,7 @@ class ServiceAppointmentDialog(dialog.DialogBase):
             'time': py_time,
             'notes': _txt(self.edt_notes)
         }
-        data['service_apt_id'] = getattr(self, 'service_apt_id', None)
-        self.logger.info(f"ServiceAppointmentDialog.commit -> {data}")
+        data['service_apt_id'] = self.service_apt_id
         return data
 
     def _on_save(self, event=None):
@@ -159,7 +161,6 @@ class ServiceAppointmentDialog(dialog.DialogBase):
         }
         result = save_service_appointment(payload, context=self)
         if result.get('ok'):
-            self.logger.info('Service appointment saved successfully')
             self.end_execute(1)
         else:
             errors = result.get('errors') or []
@@ -180,7 +181,28 @@ class ServiceAppointmentDialog(dialog.DialogBase):
             msgbox(body, "Validation Error")
 
     def _prepare(self):
-        pass
+        if self.service_apt_id is None:
+            return
+
+        from librepy.app.data.dao.service_appointment_dao import ServiceAppointmentDAO
+
+        dao = ServiceAppointmentDAO(self.logger)
+        rec = dao.get_by_id(self.service_apt_id)
+        if not rec:
+            self.logg.info(f"ServiceAppointmentDialog._prepare: no record found for id={self.service_apt_id}")
+            return
+        # Convert model instance to dict when needed
+        if not isinstance(rec, dict):
+            rec = dao.to_dict(rec)
+        # Populate text fields
+        self.edt_name.setText(rec['name'] or '')
+        self.edt_phone.setText(str(rec['phone_number'] or ''))
+        self.edt_email.setText(rec['email'] or '')
+        self.edt_notes.setText(rec.get('notes') or '')
+        if rec.get('appointment_date'):
+            self.edt_date.setDate(python_date_to_uno(rec['appointment_date']))
+        if rec.get('appointment_time'):
+            self.edt_time.setTime(python_time_to_uno(rec['appointment_time']))
 
     def _dispose(self):
         pass

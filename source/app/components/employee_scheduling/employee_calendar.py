@@ -1,5 +1,6 @@
 from librepy.app.components.calendar.calendar_view import Calendar
 from librepy.app.data.dao.employee_contract_dao import EmployeeContractDAO
+from librepy.app.components.employee_scheduling.employee_contract_dlg import EmployeeContractDialog
 import calendar as py_calendar
 import traceback
 from datetime import timedelta
@@ -30,7 +31,6 @@ class EmployeeCalendar(Calendar):
     def on_new_entry(self, event):
         """Open the Employee Contract dialog and refresh calendar on successful save."""
         try:
-            from .employee_contract_dlg import EmployeeContractDialog
             dlg = EmployeeContractDialog(self, self.ctx, self.smgr, self.frame, self.ps, Title="New Employee Contract")
             ret = dlg.execute()
             if ret == 1:
@@ -45,7 +45,6 @@ class EmployeeCalendar(Calendar):
             super().on_entry_click(ev, entry_id)
             if entry_id is None:
                 return
-            from .employee_contract_dlg import EmployeeContractDialog
             dlg = EmployeeContractDialog(self, self.ctx, self.smgr, self.frame, self.ps, Title="Edit Employee Contract", contract_id=entry_id)
             ret = dlg.execute()
             if ret == 1 or ret == 2:

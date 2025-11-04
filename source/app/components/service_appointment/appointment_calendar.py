@@ -1,8 +1,8 @@
 from librepy.app.components.calendar.calendar_view import Calendar
 from librepy.app.data.dao.service_appointment_dao import ServiceAppointmentDAO
+from librepy.app.components.service_appointment.service_appt_dlg import ServiceAppointmentDialog
 import calendar as py_calendar
 import traceback
-from .service_appt_dlg import ServiceAppointmentDialog
 
 
 class AppointmentCalendar(Calendar):
@@ -45,10 +45,8 @@ class AppointmentCalendar(Calendar):
         """
         try:
             super().on_entry_click(ev, entry_id)
-
             if entry_id is None:
                 return
-
             dlg = ServiceAppointmentDialog(self, self.ctx, self.smgr, self.frame, self.ps, Title="Edit Service Appointment", service_apt_id=entry_id)
             ret = dlg.execute()
             if ret == 1 or ret == 2:

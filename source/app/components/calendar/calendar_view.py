@@ -543,6 +543,14 @@ class Calendar(ctr_container.Container):
         """Hook: Handle New Entry button click. Base: no-op."""
         return
 
+    def _on_entry_click(self, ev, entry_id=None):
+        """Default handler for entry button clicks.
+        
+        Subclasses should override to implement domain-specific behavior.
+        By default, only logs entry id.
+        """
+        self.logger.info(f"Calendar entry double-clicked: id={entry_id}")
+
     def _clear_entries(self):
         """Dispose and clear all rendered entry controls and their cached positions.
         
@@ -564,36 +572,40 @@ class Calendar(ctr_container.Container):
         finally:
             self.entry_labels.clear()
 
-    def _render_single_entry(self, entry_name, text, x, y, w, h, row_index, background_color=None):
-        """Render a single entry label and cache its base position.
+    def _render_single_entry(self, entry_name, text, x, y, w, h, row_index, background_color=None, entry_id=None, text_color=None):
+        """Render a single entry control (button) and cache its base position.
         
-        Creates a pill-like label control, registers it in self.entry_labels,
+        Creates a pill-like button control, registers it in self.entry_labels,
         and caches the base position in self._base_positions for scrolling.
-        Subclasses can override only if they need custom control creation.
+        Binds click/double-click to self._on_entry_click(ev, entry_id).
+        Subclasses can override to customize control creation; _render_entries_for_day
+        will call this method for each entry.
         """
-        # Default pastel if not provided
         if background_color is None:
             background_color = 0xD6EAF8
-        pill = self.add_label(
+        btn = self.add_button(
             entry_name,
             x, y, w, h,
             Label=str(text or ''),
-            FontHeight=10,
+            FontHeight=self.calendar_config.get('job_font_size', 10),
             FontWeight=150,
-            TextColor=0x222222,
+            TextColor=text_color,
             BackgroundColor=background_color,
             Border=0
         )
-        self.entry_labels[entry_name] = pill
+        # Bind double-click listener if available; fallback to action listener
+        self.listeners.add_mouse_listener(btn, pressed=lambda ev, eid=entry_id: self._on_entry_click(ev, eid))
+        # self.add_action_listener(btn, lambda ev, eid=entry_id: self._on_entry_click(ev, eid))
+
+        self.entry_labels[entry_name] = btn
         self._base_positions[entry_name] = (x, y, w, h, row_index)
-        return pill
+        return btn
 
     def _render_entries_for_day(self, date, x, base_y, cell_width, row_index):
         """Render all entries for a specific date below its day label.
         
-        Reads layout from self.calendar_config and renders entries from
-        self.calendar_data[YYYY-MM-DD]. Each entry should be a dict with at
-        least 'id' and 'title'; optional 'color' sets the background.
+        Computes geometry and text for each entry and delegates control creation
+        to _render_single_entry to ensure consistent behavior across calendars.
         """
         cfg = self.calendar_config
         day_label_height = cfg['day_label_height']
@@ -604,20 +616,31 @@ class Calendar(ctr_container.Container):
         date_key = f"{date.year:04d}-{date.month:02d}-{date.day:02d}"
         entries_for_day = self.calendar_data.get(date_key, [])
         for idx, entry in enumerate(entries_for_day):
-            entry_name = f"pill_{date.day}{date.month}{date.year}_{entry.get('id')}"
-            pill_x = x + entry_margin_x
-            pill_y = base_y + day_label_height + entry_spacing + idx * (entry_height + entry_spacing)
-            pill_w = cell_width - 2 * entry_margin_x
-            pill_h = entry_height
+            entry_name = f"pillbtn_{date.day}{date.month}{date.year}_{entry.get('id')}"
+            btn_x = x + entry_margin_x
+            btn_y = base_y + day_label_height + entry_spacing + idx * (entry_height + entry_spacing)
+            btn_w = cell_width - 2 * entry_margin_x
+            btn_h = entry_height
+
+            # Truncate long titles to keep buttons compact
+            title = entry.get('title') or ''
+            max_len = 24
+            label = (title[:max_len - 2] + '..') if len(title) > max_len else title
+
+            # Background color (text color computed in _render_single_entry if not provided)
+            bg = entry.get('color', 0xD6EAF8)
+            entry_id = entry.get('id')
+
             self._render_single_entry(
                 entry_name,
-                entry.get('title'),
-                pill_x,
-                pill_y,
-                pill_w,
-                pill_h,
+                label,
+                btn_x,
+                btn_y,
+                btn_w,
+                btn_h,
                 row_index,
-                entry.get('color', 0xD6EAF8)
+                background_color=bg,
+                entry_id=entry_id
             )
 
     def _move_entries_in_view(self, visible_row_start, visible_row_end, offset_y):

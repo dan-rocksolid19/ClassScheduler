@@ -7,25 +7,43 @@ class TeachersTab(BaseTab):
         super().__init__(dialog, page, ctx, smgr, logger)
         self.grid_base = None
         self.grid = None
+        self.btn_new_entry = None
 
     def build(self):
-        # Define grid columns: (Title, field_key, width, stretch)
+        btn_w, btn_h = 100, 22
+        btn_x = 10 + 460 - btn_w
+        btn_y = 10
+        self.btn_new_entry = self.dialog.add_button(
+            'BtnTeacherNewEntry', btn_x, btn_y, btn_w, btn_h,
+            callback=self.on_new_entry,
+            page=self.page,
+            Label='New Entry'
+        )
+
         titles = [
             ("ID", "id", 70, 1),
             ("Name", "name", 220, 1),
             ("Email", "email", 220, 1),
         ]
-        # Create grid within the tab page
         self.grid_base, self.grid = self.dialog.add_grid(
             'GridTeachers',
-            10, 10,
-            460, 300,
+            10, 40,
+            460, 270,
             titles,
             page=self.page,
             ShowRowHeader=False,
         )
         # Load data initially
         self.load_data()
+
+    def on_new_entry(self, ev=None):
+        try:
+            from librepy.app.components.settings.teacher_entry_dlg import TeacherEntryDialog
+            dlg = TeacherEntryDialog(self.ctx, self.dialog, self.logger)
+            dlg.execute()
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Failed to open TeacherEntryDialog: {e}")
 
     def load_data(self):
         try:

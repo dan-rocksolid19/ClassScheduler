@@ -1,5 +1,6 @@
 from .base_tab import BaseTab
 from librepy.app.data.dao.employee_dao import EmployeeDAO
+from librepy.pybrex.listeners import Listeners
 
 
 class EmployeesTab(BaseTab):
@@ -8,6 +9,7 @@ class EmployeesTab(BaseTab):
         self.grid_base = None
         self.grid = None
         self.btn_new_entry = None
+        self.listeners = Listeners()
 
     def build(self):
         btn_w, btn_h = 70, 10
@@ -35,6 +37,7 @@ class EmployeesTab(BaseTab):
             page=self.page,
             ShowRowHeader=False,
         )
+        self.listeners.add_mouse_listener(self.grid, pressed=self.on_row_double_click)
         # Load data initially
         self.load_data()
 
@@ -48,4 +51,25 @@ class EmployeesTab(BaseTab):
             self.logger.error(f"EmployeesTab.load_data error: {e}")
 
     def on_new_entry(self, ev=None):
-        self.logger.error(f"new employee entry clicked")
+        try:
+            from librepy.app.components.settings.employee_entry_dlg import EmployeeEntryDialog
+            dlg = EmployeeEntryDialog(self.ctx, self.dialog, self.logger)
+            ret = dlg.execute()
+            if ret in (1, 2):
+                self.load_data()
+        except Exception as e:
+            self.logger.error(f"Failed to open EmployeeEntryDialog: {e}")
+
+    def on_row_double_click(self, ev=None):
+        if getattr(ev, 'Buttons', None) == 1 and getattr(ev, 'ClickCount', 0) == 2:
+            try:
+                heading = self.grid_base.active_row_heading()
+                if heading is None:
+                    return
+                from librepy.app.components.settings.employee_entry_dlg import EmployeeEntryDialog
+                dlg = EmployeeEntryDialog(self.ctx, self.dialog, self.logger, employee_id=heading)
+                ret = dlg.execute()
+                if ret in (1, 2):
+                    self.load_data()
+            except Exception as e:
+                self.logger.error(f"EmployeesTab.on_row_double_click error: {e}")

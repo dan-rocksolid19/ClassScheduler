@@ -11,6 +11,28 @@ class EmployeeDAO(BaseDAO):
     def __init__(self, logger):
         super().__init__(Employee, logger)
 
+    def create(self, first_name, last_name, email):
+        """Create a new Employee and return the model instance."""
+        def _q():
+            return Employee.create(
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+            )
+        return self.safe_execute('create Employee', _q, default_return=None)
+
+    def update(self, employee_id, first_name=None, last_name=None, email=None):
+        """Update fields on Employee and return the model instance."""
+        updates = {
+            'first_name': first_name,
+            'last_name': last_name,
+            'email': email,
+        }
+        self.update_fields(Employee.employee_id == employee_id, updates, operation_name='update Employee')
+        def _fetch():
+            return Employee.get(Employee.employee_id == employee_id)
+        return self.safe_execute('get Employee after update', _fetch, default_return=None)
+
     def get_all_employees(self):
         """Return list of dicts for all employees.
 

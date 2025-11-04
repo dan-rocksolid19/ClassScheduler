@@ -42,7 +42,7 @@ class Employee(BaseModel):
     employee_id = AutoField(primary_key=True)
     first_name = CharField(max_length=45)
     last_name = CharField(max_length=45)
-    email = CharField(max_length=45)
+    email = CharField(max_length=45, null=True)
 
 class EmployeeContract(BaseModel):
     contract_id = AutoField(primary_key=True)

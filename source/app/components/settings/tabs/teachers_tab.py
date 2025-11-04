@@ -44,8 +44,7 @@ class TeachersTab(BaseTab):
             dlg = TeacherEntryDialog(self.ctx, self.dialog, self.logger)
             dlg.execute()
         except Exception as e:
-            if self.logger:
-                self.logger.error(f"Failed to open TeacherEntryDialog: {e}")
+            self.logger.error(f"Failed to open TeacherEntryDialog: {e}")
 
     def load_data(self):
         try:

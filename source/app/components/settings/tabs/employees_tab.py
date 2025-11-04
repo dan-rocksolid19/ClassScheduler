@@ -7,25 +7,37 @@ class EmployeesTab(BaseTab):
         super().__init__(dialog, page, ctx, smgr, logger)
         self.grid_base = None
         self.grid = None
+        self.btn_new_entry = None
 
     def build(self):
-        # Define grid columns: (Title, field_key, width, stretch)
+        btn_w, btn_h = 70, 10
+        btn_x = 10 + 460 - btn_w
+        btn_y = 5
+        self.btn_new_entry = self.dialog.add_button(
+            'BtnEmployeeNewEntry', btn_x, btn_y, btn_w, btn_h,
+            callback=self.on_new_entry,
+            page=self.page,
+            Label='New Entry',
+            FontWeight=100,
+            FontHeight=12,
+        )
+
         titles = [
             ("ID", "id", 70, 1),
             ("Name", "name", 220, 1),
             ("Email", "email", 220, 1),
         ]
-        # Create grid within the tab page
         self.grid_base, self.grid = self.dialog.add_grid(
             'GridEmployees',
-            10, 10,
-            460, 300,
+            10, 20,
+            460, 260,
             titles,
             page=self.page,
             ShowRowHeader=False,
         )
         # Load data initially
         self.load_data()
+
 
     def load_data(self):
         try:
@@ -34,3 +46,6 @@ class EmployeesTab(BaseTab):
             self.grid_base.set_data(rows, heading='id')
         except Exception as e:
             self.logger.error(f"EmployeesTab.load_data error: {e}")
+
+    def on_new_entry(self, ev=None):
+        self.logger.error(f"new employee entry clicked")

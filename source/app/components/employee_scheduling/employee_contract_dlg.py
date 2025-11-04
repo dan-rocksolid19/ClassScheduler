@@ -32,7 +32,7 @@ class EmployeeContractDialog(dialog.DialogBase):
 
         self.lbl_width = None
         self.field_width = None
-        self._emp_pairs = []
+        self._pairs_map = {}
 
         parent_window = self.frame.window if self.frame is not None else None
         super().__init__(ctx, self.parent, parent_window, **props)
@@ -128,9 +128,7 @@ class EmployeeContractDialog(dialog.DialogBase):
             if tpo and (tpo.hour != 0 or tpo.minute != 0 or tpo.second != 0):
                 py_out = tpo
 
-        # employee id from dropdown index
-        idx = self.lst_emp.getSelectedItemPos()
-        emp_id = self._emp_pairs[idx][0] if isinstance(idx, int) and idx >= 0 and idx < len(self._emp_pairs) else None
+        emp_id = self.get_selected_id(self.lst_emp, '_emp_items')
 
         data = {
             'contract_id': self.contract_id,
@@ -188,12 +186,38 @@ class EmployeeContractDialog(dialog.DialogBase):
         if labels:
             list_ctrl.addItems(tuple(labels), 0)
 
+    # ---------- Generic dropdown helpers (no per-dropdown variables) ----------
+    def set_combo_pairs(self, list_ctrl, pairs, store_attr):
+        """Populate a list/combo with labels and store (id,label) pairs in a map."""
+        self._pairs_map[store_attr] = list(pairs or [])
+        labels = [lbl for _id, lbl in (pairs or [])]
+        self.set_list_items(list_ctrl, labels)
+
+    def get_selected_index(self, list_ctrl):
+        return list_ctrl.getSelectedItemPos()
+
+    def get_selected_id(self, list_ctrl, store_attr):
+        idx = self.get_selected_index(list_ctrl)
+        pairs = self._pairs_map.get(store_attr, [])
+        if isinstance(idx, int) and 0 <= idx < len(pairs):
+            return pairs[idx][0]
+        return None
+
+    def select_by_id(self, list_ctrl, store_attr, wanted_id):
+        if wanted_id is None:
+            return False
+        pairs = self._pairs_map.get(store_attr, [])
+        for i, (pid, _lbl) in enumerate(pairs):
+            if pid == wanted_id:
+                list_ctrl.selectItemPos(i, True)
+                return True
+        return False
+
     def _prepare(self):
         # Load employees and populate dropdown
         from librepy.app.service.srv_employee_contract import load_employee_pairs
-        self._emp_pairs = load_employee_pairs(self.logger)
-        labels = [label for _, label in self._emp_pairs]
-        self.set_list_items(self.lst_emp, labels)
+        emp_pairs = load_employee_pairs(self.logger)
+        self.set_combo_pairs(self.lst_emp, emp_pairs, store_attr='_emp_items')
 
         # If creating new, nothing else to populate
         if self.contract_id is None:
@@ -213,12 +237,9 @@ class EmployeeContractDialog(dialog.DialogBase):
         if emp_id is None:
             emp = rec.get('employee')
             if emp is not None:
-                emp_id = emp.employee_id
+                emp_id = getattr(emp, 'employee_id', None)
         if emp_id is not None:
-            for i, (eid, _lbl) in enumerate(self._emp_pairs):
-                if eid == emp_id:
-                    self.lst_emp.selectItemPos(i, True)
-                    break
+            self.select_by_id(self.lst_emp, '_emp_items', emp_id)
 
         # Populate other fields
         if rec.get('start_date'):

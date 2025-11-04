@@ -2,6 +2,15 @@ from librepy.pybrex import dialog
 from librepy.pybrex.uno_date_time_converters import uno_date_to_python, uno_time_to_python, python_date_to_uno, python_time_to_uno
 
 
+def _format_phone_for_display(digits) -> str:
+    s = ''.join(c for c in str(digits or '') if c.isdigit())
+    if len(s) == 10:
+        return f"({s[0:3]}) {s[3:6]}-{s[6:10]}"
+    if len(s) == 7:
+        return f"{s[0:3]}-{s[3:7]}"
+    return s
+
+
 class ServiceAppointmentDialog(dialog.DialogBase):
     """
     Minimal dialog container for creating/editing a Service Appointment.
@@ -196,7 +205,7 @@ class ServiceAppointmentDialog(dialog.DialogBase):
             rec = dao.to_dict(rec)
         # Populate text fields
         self.edt_name.setText(rec['name'] or '')
-        self.edt_phone.setText(str(rec['phone_number'] or ''))
+        self.edt_phone.setText(_format_phone_for_display(rec['phone_number']))
         self.edt_email.setText(rec['email'] or '')
         self.edt_notes.setText(rec.get('notes') or '')
         if rec.get('appointment_date'):

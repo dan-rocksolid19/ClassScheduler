@@ -62,18 +62,13 @@ class ServiceAppointmentForm(BaseForm):
         # PK passthrough for updates
         if svc_id is not None:
             try:
-                # Accept numeric-like strings
                 cleaned["service_apt_id"] = int(svc_id) if str(svc_id).strip() != "" else None
             except (TypeError, ValueError):
                 self.add_error("service_apt_id", "Invalid service appointment id")
 
         # name
-        if (name is not None) or not self.partial:
             name_val = (name or "").strip()
-            if not name_val:
-                self.add_error("name", "Name is required")
-            else:
-                cleaned["name"] = name_val
+            cleaned["name"] = name_val
 
         # phone: digits only, at least 7
         if (phone is not None) or not self.partial:

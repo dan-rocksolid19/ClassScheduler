@@ -164,6 +164,20 @@ class ServiceAppointmentDialog(dialog.DialogBase):
         else:
             errors = result.get('errors') or []
             self.logger.error(f"Failed to save service appointment: {errors}")
+            from librepy.pybrex.msgbox import msgbox
+            if isinstance(errors, list) and errors:
+                lines = []
+                for e in errors:
+                    fld = e.get('field') if isinstance(e, dict) else None
+                    msg = e.get('message') if isinstance(e, dict) else str(e)
+                    if fld and fld != '__all__':
+                        lines.append(f"{fld}: {msg}")
+                    else:
+                        lines.append(str(msg))
+                body = "\n".join(lines)
+            else:
+                body = "Invalid input. Please correct the highlighted fields."
+            msgbox(body, "Validation Error")
 
     def _prepare(self):
         pass

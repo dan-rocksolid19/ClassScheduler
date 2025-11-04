@@ -32,6 +32,7 @@ class EmployeeContractDialog(dialog.DialogBase):
 
         self.lbl_width = None
         self.field_width = None
+        self._emp_pairs = []
 
         parent_window = self.frame.window if self.frame is not None else None
         super().__init__(ctx, self.parent, parent_window, **props)
@@ -46,9 +47,9 @@ class EmployeeContractDialog(dialog.DialogBase):
 
         label_kwargs = dict(FontWeight=120, FontHeight=11, VerticalAlign=2)
 
-        # employee_id (numeric)
-        self.add_label('LblEmp', x, y, self.lbl_width, self.LABEL_HEIGHT, Label='Employee ID', **label_kwargs)
-        self.edt_emp = self.add_edit('EdtEmp', x + self.lbl_width, y - 2, self.field_width, self.FIELD_HEIGHT)
+        # employee dropdown
+        self.add_label('LblEmp', x, y, self.lbl_width, self.LABEL_HEIGHT, Label='Employee', **label_kwargs)
+        self.lst_emp = self.add_list('LstEmp', x + self.lbl_width, y - 2, self.field_width, self.FIELD_HEIGHT, Dropdown=True, MultiSelection=False)
         y += self.FIELD_HEIGHT + self.ROW_SPACING
 
         # start_date
@@ -103,9 +104,6 @@ class EmployeeContractDialog(dialog.DialogBase):
         self.add_action_listener(self.btn_save, self._on_save)
 
     def commit(self):
-        def _txt(ctrl):
-            return ctrl.getText().strip()
-
         # dates
         py_start = None
         ds = self.edt_start.getDate()
@@ -130,9 +128,9 @@ class EmployeeContractDialog(dialog.DialogBase):
             if tpo and (tpo.hour != 0 or tpo.minute != 0 or tpo.second != 0):
                 py_out = tpo
 
-        # employee id
-        emp_id_txt = _txt(self.edt_emp)
-        emp_id = int(emp_id_txt) if emp_id_txt.isdigit() else None
+        # employee id from dropdown index
+        idx = self.lst_emp.getSelectedItemPos()
+        emp_id = self._emp_pairs[idx][0] if isinstance(idx, int) and idx >= 0 and idx < len(self._emp_pairs) else None
 
         data = {
             'contract_id': self.contract_id,
@@ -182,21 +180,47 @@ class EmployeeContractDialog(dialog.DialogBase):
             self.logger.error("Failed to delete employee contract")
             msgbox("Failed to delete the contract. Please try again.", "Delete Error")
 
+    def set_list_items(self, list_ctrl, labels):
+        # Clear and add list items
+        count = list_ctrl.getItemCount()
+        if count:
+            list_ctrl.removeItems(0, count)
+        if labels:
+            list_ctrl.addItems(tuple(labels), 0)
+
     def _prepare(self):
+        # Load employees and populate dropdown
+        from librepy.app.service.srv_employee_contract import load_employee_pairs
+        self._emp_pairs = load_employee_pairs(self.logger)
+        labels = [label for _, label in self._emp_pairs]
+        self.set_list_items(self.lst_emp, labels)
+
+        # If creating new, nothing else to populate
         if self.contract_id is None:
             return
-        from librepy.app.data.dao.employee_contract_dao import EmployeeContractDAO
 
+        from librepy.app.data.dao.employee_contract_dao import EmployeeContractDAO
         dao = EmployeeContractDAO(self.logger)
         rec = dao.get_by_id(self.contract_id)
         if not rec:
             self.logger.info(f"EmployeeContractDialog._prepare: no record found for id={self.contract_id}")
             return
-        # Convert to dict via BaseDAO
         if not isinstance(rec, dict):
             rec = dao.to_dict(rec)
-        # Populate fields
-        self.edt_emp.setText(str(rec.get('employee')) if rec.get('employee') is not None else '')
+
+        # Preselect employee by id
+        emp_id = rec.get('employee_id')
+        if emp_id is None:
+            emp = rec.get('employee')
+            if emp is not None:
+                emp_id = emp.employee_id
+        if emp_id is not None:
+            for i, (eid, _lbl) in enumerate(self._emp_pairs):
+                if eid == emp_id:
+                    self.lst_emp.selectItemPos(i, True)
+                    break
+
+        # Populate other fields
         if rec.get('start_date'):
             self.edt_start.setDate(python_date_to_uno(rec['start_date']))
         if rec.get('end_date'):

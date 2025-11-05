@@ -59,7 +59,7 @@ class TrainingSessionList(ctr_container.Container):
             'btn_new_entry',
             pos['new_entry_x'], pos['top_button_y'], pos['top_button_width'], pos['top_button_height'],
             Label='New Entry',
-            callback=self.create_session,
+            callback=self.on_new_entry,
             BackgroundColor=0x2C3E50,
             TextColor=0xFFFFFF,
             FontWeight=150,
@@ -89,8 +89,8 @@ class TrainingSessionList(ctr_container.Container):
             'grid_sessions', pos['grid_x'], pos['grid_y'], pos['grid_w'], pos['grid_h'], titles,
             ShowRowHeader=False, HeaderBackgroundColor=GRID_HEADER_BG_COLOR
         )
-        # Wire double-click
-        self.grid_base.mouse_doubleclick_fn = self.on_row_double_click
+        # Wire double-click via mouse listener (replicate TeachersTab)
+        self.add_mouse_listener(self.grid, pressed=self.on_row_double_click)
 
     def load_data(self, search_query=None):
         try:
@@ -165,38 +165,27 @@ class TrainingSessionList(ctr_container.Container):
 
     def on_row_double_click(self, ev=None):
         try:
-            # Get selected row id
-            heading = self.grid_base.active_row_heading()
-            if heading is None:
-                return
-            self.logger.info(f"Open TrainingSessionDialog for id={heading}")
-            # If a dialog exists, open it; otherwise just log
-            try:
-                from librepy.app.components.home.training_session_dialog import TrainingSessionDialog  # may not exist
-                dlg = TrainingSessionDialog(self.ctx, self.smgr, self.frame.window)
-                result = dlg.open_edit(heading)
-                if result:
-                    self.refresh_entries()
-            except Exception:
-                # Fallback: no dialog available
-                self.refresh_entries()
+            if getattr(ev, 'Buttons', None) == 1 and getattr(ev, 'ClickCount', 0) == 2:
+                heading = self.grid_base.active_row_heading()
+                if heading is None:
+                    return
+                from librepy.app.components.training_session.training_session_entry_dlg import TrainingSessionEntryDlg
+                dlg = TrainingSessionEntryDlg(self, self.ctx, self.smgr, self.frame, self.ps, Title="Edit Training Session", session_id=heading)
+                ret = dlg.execute()
+                if ret in (1, 2):
+                    self.load_data()
         except Exception as e:
-            self.logger.error(f"Error handling double-click: {e}")
+            self.logger.error(f"TrainingSessionList.on_row_double_click error: {e}")
 
-    def create_session(self, ev=None):
+    def on_new_entry(self, ev=None):
         try:
-            self.logger.info("Open TrainingSessionDialog in create mode")
-            try:
-                from librepy.app.components.home.training_session_dialog import TrainingSessionDialog  # may not exist
-                dlg = TrainingSessionDialog(self.ctx, self.smgr, self.frame.window)
-                result = dlg.open_create()
-                if result:
-                    self.refresh_entries()
-            except Exception:
-                # Fallback if dialog missing
-                self.refresh_entries()
+            from librepy.app.components.training_session.training_session_entry_dlg import TrainingSessionEntryDlg
+            dlg = TrainingSessionEntryDlg(self, self.ctx, self.smgr, self.frame, self.ps, Title="New Training Session")
+            ret = dlg.execute()
+            if ret == 1:
+                self.load_data()
         except Exception as e:
-            self.logger.error(f"Error creating session: {e}")
+            self.logger.error(f"TrainingSessionList failed to open new entry dialog: {e}")
 
     def show(self):
         super().show()

@@ -13,6 +13,21 @@ class TrainingSessionForm(BaseForm):
         update_fn = "update"
         pk_field = "session_id"
 
+    def save(self) -> dict:
+        """
+        Extend BaseForm.save() to add 'session_id'/'id' keys to the response
+        so callers can immediately know the persisted record id (both on create
+        and update). The service returns this payload unchanged.
+        """
+        res = super().save()
+        if isinstance(res, dict) and res.get("ok"):
+            inst = res.get("result")
+            new_id = None
+            if inst is not None:
+                new_id = getattr(inst, "session_id", None)
+            res["session_id"] = new_id
+        return res
+
     def _parse_date(self, v) -> Optional[dt_date]:
         if v is None:
             return None

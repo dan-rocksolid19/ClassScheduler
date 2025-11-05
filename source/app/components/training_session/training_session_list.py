@@ -184,6 +184,12 @@ class TrainingSessionList(ctr_container.Container):
             ret = dlg.execute()
             if ret == 1:
                 self.load_data()
+                new_id = getattr(dlg, 'last_saved_id', None)
+                if new_id:
+                    dlg2 = TrainingSessionEntryDlg(self, self.ctx, self.smgr, self.frame, self.ps, Title="Edit Training Session", session_id=new_id)
+                    ret2 = dlg2.execute()
+                    if ret2 in (1, 2):
+                        self.load_data()
         except Exception as e:
             self.logger.error(f"TrainingSessionList failed to open new entry dialog: {e}")
 

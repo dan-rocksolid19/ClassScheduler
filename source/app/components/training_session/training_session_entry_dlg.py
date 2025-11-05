@@ -121,6 +121,9 @@ class TrainingSessionEntryDlg(dialog.DialogBase):
         payload = self.commit()
         result = save_training_session(payload, context=self)
         if result.get('ok'):
+            # Capture the new id when creating (for callers to reopen in edit mode)
+            if self.session_id is None:
+                self.last_saved_id = result.get('session_id') or result.get('id')
             self.end_execute(1)
         else:
             errors = result.get('errors') or []

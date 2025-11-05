@@ -29,11 +29,17 @@ class TrainingSessionsCalendar(Calendar):
     def on_new_entry(self, event):
         """Open dialog to create a new training session and refresh on success."""
         try:
-            # Pass current calendar date as default
             dlg = TrainingSessionEntryDlg(self, self.ctx, self.smgr, self.frame, self.ps, Title="New Training Session")
             ret = dlg.execute()
             if ret == 1:
                 self._update_calendar()
+                #  TODO: Refine in list too
+                new_id = getattr(dlg, 'last_saved_id', None)
+                if new_id:
+                    dlg2 = TrainingSessionEntryDlg(self, self.ctx, self.smgr, self.frame, self.ps, Title="Edit Training Session", session_id=new_id)
+                    ret2 = dlg2.execute()
+                    if ret2 in (1, 2):
+                        self._update_calendar()
         except Exception as e:
             self.logger.error(f"Failed to open Training Session dialog: {e}")
             self.logger.error(traceback.format_exc())

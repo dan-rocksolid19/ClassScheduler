@@ -29,6 +29,21 @@ class TrainingSession(BaseModel):
     price = DecimalField(max_digits=10, decimal_places=2)
     teacher = ForeignKeyField(Teacher, backref='training_sessions')
 
+class SessionAttendee(BaseModel):
+    attendee_id = AutoField(primary_key=True)
+    session = ForeignKeyField(TrainingSession, backref='attendees')
+    name = CharField(max_length=80)
+    email = CharField(max_length=120, null=True)
+    phone = CharField(max_length=20, null=True)
+    paid = BooleanField(default=False)
+    notes = TextField(null=True)
+
+    class Meta:
+        # prevent duplicate sign-ups by email within the same session
+        indexes = (
+            (('session', 'email'), True),
+        )
+
 class ServiceAppointment(BaseModel):
     service_apt_id = AutoField(primary_key=True)
     name = CharField(max_length=45)

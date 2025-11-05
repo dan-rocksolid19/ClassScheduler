@@ -14,26 +14,10 @@ class SessionAttendeeDAO(BaseDAO):
 
     # ---- CRUD helpers ----
     def create(self, session, name, email=None, phone=None, paid=False, notes=None):
-        """Create a new SessionAttendee and return the model instance.
-
-        Args:
-            session: session id (int) or TrainingSession instance
-            name: attendee name
-            email: optional email
-            phone: optional phone
-            paid: boolean flag
-            notes: optional notes
-        """
+        """Create a new SessionAttendee and return the model instance."""
         def _q():
-            sess = session
-            if not isinstance(sess, TrainingSession):
-                try:
-                    sess = TrainingSession.get(TrainingSession.session_id == int(session))
-                except Exception:
-                    # Let Peewee raise if invalid during create
-                    pass
             return SessionAttendee.create(
-                session=sess,
+                session=session,
                 name=name,
                 email=email,
                 phone=phone,

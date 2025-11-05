@@ -66,41 +66,30 @@ class PeopleTab(BaseTab):
         self.load_data()
 
     def on_new_entry(self, ev=None):
-        # Optional: open an attendee entry dialog if available
-        try:
+        from librepy.app.components.training_session.attendee_entry_dlg import AttendeeEntryDialog
+        dlg = AttendeeEntryDialog(self.ctx, self.dialog, self.logger, session_id=self.session_id)
+        ret = dlg.execute()
+        if ret in (1, 2):
+            self.load_data()
+
+    def on_row_double_click(self, ev=None):
+        if ev.Buttons == 1 and ev.ClickCount == 2:
+            heading = self.grid_base.active_row_heading()
+            if heading is None:
+                return
             from librepy.app.components.training_session.attendee_entry_dlg import AttendeeEntryDialog
-            dlg = AttendeeEntryDialog(self.ctx, self.dialog, self.logger, session_id=self.session_id)
+            dlg = AttendeeEntryDialog(self.ctx, self.dialog, self.logger, attendee_id=heading, session_id=self.session_id)
             ret = dlg.execute()
             if ret in (1, 2):
                 self.load_data()
-        except Exception as e:
-            # Dialog not implemented yet or failed; just log and keep grid usable
-            self.logger.info(f"Attendee new-entry dialog not available or failed: {e}")
-
-    def on_row_double_click(self, ev=None):
-        if getattr(ev, 'Buttons', None) == 1 and getattr(ev, 'ClickCount', 0) == 2:
-            try:
-                heading = self.grid_base.active_row_heading()
-                if heading is None:
-                    return
-                from librepy.app.components.training_session.attendee_entry_dlg import AttendeeEntryDialog
-                dlg = AttendeeEntryDialog(self.ctx, self.dialog, self.logger, attendee_id=heading, session_id=self.session_id)
-                ret = dlg.execute()
-                if ret in (1, 2):
-                    self.load_data()
-            except Exception as e:
-                self.logger.info(f"Attendee edit dialog not available or failed: {e}")
 
     def load_data(self):
-        try:
-            if not self.session_id:
-                self.grid_base.set_data([], heading='id')
-                return
-            dao = SessionAttendeeDAO(self.logger)
-            rows = dao.get_all_for_grid(self.session_id) or []
-            self.grid_base.set_data(rows, heading='id')
-        except Exception as e:
-            self.logger.error(f"PeopleTab.load_data error: {e}")
+        if not self.session_id:
+            self.grid_base.set_data([], heading='id')
+            return
+        dao = SessionAttendeeDAO(self.logger)
+        rows = dao.get_all_for_grid(self.session_id) or []
+        self.grid_base.set_data(rows, heading='id')
 
     def commit(self) -> dict:
         # People grid does not contribute to session save payload currently

@@ -102,16 +102,14 @@ class TrainingSessionEntryDlg(dialog.DialogBase):
         self.add_action_listener(self.btn_save, self._on_save)
 
     def commit(self) -> dict:
-        """Aggregate commits from all tabs and merge into one payload."""
+        """Collect payload only from Details tab.
+        People tab manages its own CRUD and does not contribute to session payload.
+        """
         payload = {}
-        for tab in (self.details_tab, self.people_tab):
-            if tab and hasattr(tab, 'commit'):
-                try:
-                    data = tab.commit()
-                    if isinstance(data, dict):
-                        payload.update(data)
-                except Exception as e:
-                    self.logger.error(f"Tab commit failed: {e}")
+        if self.details_tab is not None:
+            data = self.details_tab.commit()
+            if isinstance(data, dict):
+                payload.update(data)
         # Ensure session_id included as before
         payload.setdefault('session_id', self.session_id)
         return payload
@@ -142,8 +140,8 @@ class TrainingSessionEntryDlg(dialog.DialogBase):
             msgbox(body, "Validation Error")
 
     def _prepare(self):
-        # Delegate to tabs for data loading
-        if self.details_tab and hasattr(self.details_tab, 'prepare'):
+        # Delegate to Details tab for data loading
+        if self.details_tab is not None:
             self.details_tab.prepare()
 
     def _on_delete(self, event=None):

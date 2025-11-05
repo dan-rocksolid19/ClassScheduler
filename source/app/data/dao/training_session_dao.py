@@ -9,26 +9,49 @@ class TrainingSessionDAO(BaseDAO):
 
     def _row_to_dict(self, row):
         """Map TrainingSession row to minimal dict for calendar usage."""
-        try:
-            ts = row
-            return {
-                'id': getattr(ts, 'session_id', None),
-                'date': getattr(ts, 'session_date', None),
-                'title': getattr(ts, 'name', None),
-                'status': getattr(ts, 'status', 'scheduled') if hasattr(ts, 'status') else 'scheduled',
-            }
-        except Exception:
-            return {
-                'id': getattr(row, 'session_id', None),
-                'date': getattr(row, 'session_date', None),
-                'title': getattr(row, 'name', None),
-                'status': 'scheduled',
-            }
+        ts = row
+        return {
+            'id': getattr(ts, 'session_id', None),
+            'date': getattr(ts, 'session_date', None),
+            'title': getattr(ts, 'name', None),
+        }
+
+    def create(self, name, teacher, session_date, session_time, price):
+        """Create a new TrainingSession and return the model instance.
+        """
+        def _q():
+            return TrainingSession.create(
+                name=name,
+                teacher=teacher,
+                session_date=session_date,
+                session_time=session_time,
+                price=price,
+            )
+        return self.safe_execute('create TrainingSession', _q, default_return=None)
+
+    def update(self, session_id, name=None, teacher=None, session_date=None, 
+               session_time=None, price=None):
+        """Update fields on TrainingSession and return the model instance."""
+        updates = {
+            'name': name,
+            'teacher': teacher,
+            'session_date': session_date,
+            'session_time': session_time,
+            'price': price,
+        }
+        self.update_fields(
+            TrainingSession.session_id == session_id, 
+            updates, 
+            operation_name='update TrainingSession'
+        )
+        def _fetch():
+            return TrainingSession.get(TrainingSession.session_id == session_id)
+        return self.safe_execute('get TrainingSession after update', _fetch, default_return=None)
 
     def get_sessions_between(self, start_date, end_date):
         """Query TrainingSession rows within [start_date, end_date].
 
-        Returns: List[dict] with keys: id, date (date or 'YYYY-MM-DD'), title, status
+        Returns: List[dict] with keys: id, date (date or 'YYYY-MM-DD'), title
         """
         def _query():
             query = (TrainingSession
@@ -43,7 +66,7 @@ class TrainingSessionDAO(BaseDAO):
     def get_session_by_id(self, session_id):
         """Fetch one TrainingSession by id.
 
-        Returns: dict with keys: id, date, title, status or None if not found
+        Returns: dict with keys: id, date, title or None if not found
         """
         def _query():
             row = TrainingSession.get(TrainingSession.session_id == session_id)

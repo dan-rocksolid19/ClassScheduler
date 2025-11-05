@@ -54,14 +54,18 @@ class TrainingSessionEntryDlg(dialog.DialogBase):
         tabs = self.add_page_container('Tabs', content_x, content_y, content_w, content_h)
 
         page_details = self.add_page(tabs, 'DetailsPage', 'Details')
-        page_people = self.add_page(tabs, 'PeoplePage', 'People')
 
         # Instantiate and build tabs
         self.details_tab = DetailsTab(self, page_details, self.ctx, self.smgr, self.logger, session_id=self.session_id)
         self.details_tab.build()
 
-        self.people_tab = PeopleTab(self, page_people, self.ctx, self.smgr, self.logger)
-        self.people_tab.build()
+        # Only show additional tabs in edit mode
+        if self.session_id is not None:
+            page_people = self.add_page(tabs, 'PeoplePage', 'People')
+            self.people_tab = PeopleTab(self, page_people, self.ctx, self.smgr, self.logger)
+            self.people_tab.build()
+        else:
+            self.people_tab = None
 
         # Buttons depending on mode
         if self.session_id is None:

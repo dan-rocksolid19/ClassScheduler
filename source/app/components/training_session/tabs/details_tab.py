@@ -25,10 +25,13 @@ class DetailsTab(BaseTab):
         self.field_width = None
 
     def build(self):
-        x = self.MARGIN
+        # Center content within the tab page by using equal left/right padding
+        page_width = self.dialog.POS_SIZE[2] - (self.dialog.MARGIN * 2)
+        inner_padding = self.MARGIN // 2
+        x = inner_padding
         y = self.MARGIN // 3
 
-        total_inner_width = self.dialog.POS_SIZE[2] - (self.MARGIN * 2)
+        total_inner_width = page_width - (inner_padding * 2)
         self.lbl_width = int(total_inner_width * 0.34)
         self.field_width = total_inner_width - self.lbl_width
 

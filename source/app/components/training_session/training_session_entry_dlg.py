@@ -43,12 +43,13 @@ class TrainingSessionEntryDlg(dialog.DialogBase):
         super().__init__(ctx, self.parent, parent_window, **props)
 
     def _create(self):
-        # Create tab container area similar to staff dialog
-        content_x = self.MARGIN // 2
-        content_y = self.MARGIN // 2
-        content_w = self.POS_SIZE[2] - self.MARGIN
-        # Space for buttons at bottom
-        content_h = self.POS_SIZE[3] - (self.MARGIN * 2)
+        # Create tab container area, matching StaffDialog layout
+        # Use full MARGIN on sides so inner tab content can center correctly
+        content_x = self.MARGIN
+        content_y = self.MARGIN - 20
+        content_w = self.POS_SIZE[2] - (self.MARGIN * 2)
+        # Leave room for action buttons + extra margin to avoid overlap
+        content_h = self.POS_SIZE[3] - (self.MARGIN * 3) - self.BUTTON_HEIGHT + 30
 
         tabs = self.add_page_container('Tabs', content_x, content_y, content_w, content_h)
 

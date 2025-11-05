@@ -1,5 +1,5 @@
 from librepy.app.data.base_dao import BaseDAO
-from librepy.app.data.model import TrainingSession
+from librepy.app.data.model import TrainingSession, Teacher
 from datetime import time, date
 
 class TrainingSessionDAO(BaseDAO):
@@ -80,15 +80,6 @@ class TrainingSessionDAO(BaseDAO):
         Each dict contains: id, name, teacher_name, session_date, session_time, price
         session_date is formatted as 'YYYY-MM-DD'; session_time as 'HH:MM'.
         """
-        sql = (
-            "SELECT c.session_id AS id, c.name, "
-            "concat(t.first_name, ' ', t.last_name) AS teacher_name, "
-            "c.session_date, c.session_time, c.price "
-            "FROM class_scheduler_admin.trainingsession c "
-            "JOIN class_scheduler_admin.teacher t ON c.teacher_id = t.teacher_id "
-            "ORDER BY c.session_date, c.session_time"
-        )
-
         def _norm_time(v):
             try:
                 if isinstance(v, time):
@@ -109,18 +100,26 @@ class TrainingSessionDAO(BaseDAO):
                 return str(v) if v is not None else ''
 
         def _query():
-            cur = self.database.execute_sql(sql)
-            rows = cur.fetchall()
+            # Build ORM query using Peewee models, no raw SQL
+            query = (
+                TrainingSession
+                .select(TrainingSession, Teacher)
+                .join(Teacher)
+                .order_by(TrainingSession.session_date, TrainingSession.session_time)
+            )
             results = []
-            for r in rows:
-                # Expect order: id, name, teacher_name, session_date, session_time, price
+            for ts in query:
+                teacher = getattr(ts, 'teacher', None)
+                t_first = getattr(teacher, 'first_name', '') or ''
+                t_last = getattr(teacher, 'last_name', '') or ''
+                teacher_name = f"{t_first} {t_last}".strip()
                 rec = {
-                    'id': r[0],
-                    'name': r[1],
-                    'teacher_name': r[2],
-                    'session_date': _norm_date(r[3]),
-                    'session_time': _norm_time(r[4]),
-                    'price': float(r[5]) if r[5] is not None else None,
+                    'id': getattr(ts, 'session_id', None),
+                    'name': getattr(ts, 'name', ''),
+                    'teacher_name': teacher_name,
+                    'session_date': _norm_date(getattr(ts, 'session_date', None)),
+                    'session_time': _norm_time(getattr(ts, 'session_time', None)),
+                    'price': float(getattr(ts, 'price', 0)) if getattr(ts, 'price', None) is not None else None,
                 }
                 results.append(rec)
             return results

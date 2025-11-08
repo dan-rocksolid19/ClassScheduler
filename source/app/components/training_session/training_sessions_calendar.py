@@ -24,7 +24,7 @@ class TrainingSessionsCalendar(Calendar):
     # ------------------------------
     def on_print(self, event):
         """Subclass callback for Print button (placeholder)."""
-        self.logger.info("Print requested (TrainingSessionsCalendar) - not implemented yet")
+        super().on_print(event)
 
     def on_new_entry(self, event):
         """Open dialog to create a new training session and refresh on success."""

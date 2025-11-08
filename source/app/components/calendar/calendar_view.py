@@ -533,11 +533,41 @@ class Calendar(ctr_container.Container):
         Base implementation: no-op, leaves self.calendar_data unchanged (or empty).
         """
         return
+    
+    def get_display_date_range(self):
+        """Return the inclusive date range currently displayed in the month grid.
+        Uses the same logic as load_calendar_data (calendar.itermonthdates with Sunday start).
+        """
+        try:
+            cal = calendar.Calendar(6)
+            month_days = list(cal.itermonthdates(self.current_date.year, self.current_date.month))
+            if not month_days:
+                self.logger.warning("get_display_date_range: month_days empty")
+                return None, None
+            start_date, end_date = month_days[0], month_days[-1]
+            self.logger.info(f"Display date range: {start_date} - {end_date}")
+            return start_date, end_date
+        except Exception as e:
+            self.logger.error(f"Error computing display date range: {e}")
+            self.logger.error(traceback.format_exc())
+            return None, None
 
     # Action hooks (to be implemented by subclasses as needed)
     def on_print(self, event):
         """Hook: Handle Print button click. Base: no-op."""
-        return
+        try:
+            self.logger.info("Print Calendar clicked")
+            start_date, end_date = self.get_display_date_range()
+            if not start_date or not end_date:
+                self.logger.warning("No calendar range available to print")
+                return
+            from librepy.jasper_report.print_calendar import save_calendar_range_as_pdf
+            self.logger.info(f"Invoking PDF export for range {start_date} - {end_date}")
+            save_calendar_range_as_pdf(start_date, end_date)
+            self.logger.info("Calendar PDF export invoked successfully")
+        except Exception as e:
+            self.logger.error(f"Error printing calendar: {e}")
+            self.logger.error(traceback.format_exc())
 
     def on_new_entry(self, event):
         """Hook: Handle New Entry button click. Base: no-op."""

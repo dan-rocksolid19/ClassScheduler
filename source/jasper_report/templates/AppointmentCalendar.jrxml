@@ -16,9 +16,59 @@
               bottomMargin="6"
               uuid="32abf871-39b8-4cc7-b03c-d950a55e2bfb">
 
+    <style name="Style1" forecolor="#050505">
+        <conditionalStyle>
+            <conditionExpression><![CDATA[$F{idx}.intValue()%7==1]]></conditionExpression>
+            <style forecolor="#FA0702"/>
+        </conditionalStyle>
+    </style>
+
     <parameter name="start_date" class="java.util.Date"/>
     <parameter name="end_date" class="java.util.Date"/>
     <parameter name="title" class="java.lang.String"/>
+
+    <queryString>
+        <![CDATA[
+WITH days AS (
+  SELECT generate_series(
+           CAST($P{start_date} AS date),
+           CAST($P{end_date}   AS date),
+           '1 day'
+         )::date AS cell_date
+)
+SELECT
+  ((d.cell_date - CAST($P{start_date} AS date))::int + 1) AS idx,
+  d.cell_date,
+  EXTRACT(DAY FROM d.cell_date)::int AS day_no,
+  COALESCE(
+    string_agg(
+      replace(
+        replace(
+          replace(
+            to_char(ts.session_time, 'HH24:MI') || ' ' || ts.name,
+            '&','&amp;'
+          ),
+          '<','&lt;'
+        ),
+        '>','&gt;'
+      ),
+      '<br/>'
+      ORDER BY ts.session_time, ts.session_id
+    ),
+    ''
+  ) AS events_html
+FROM days d
+LEFT JOIN class_scheduler_admin.trainingsession ts
+  ON ts.session_date = d.cell_date
+GROUP BY d.cell_date, idx, day_no
+ORDER BY idx;
+        ]]>
+    </queryString>
+
+    <field name="idx" class="java.lang.Integer"/>
+    <field name="cell_date" class="java.util.Date"/>
+    <field name="day_no" class="java.lang.Integer"/>
+    <field name="events_html" class="java.lang.String"/>
 
     <title>
         <band height="60">
@@ -95,4 +145,40 @@
             </staticText>
         </band>
     </title>
+
+    <detail>
+        <band height="90" splitType="Stretch">
+
+            <frame>
+                <reportElement x="0" y="0" width="110" height="90"
+                               uuid="75440275-c439-4c3e-bb77-f9f4d8f48415"/>
+                <box>
+                    <topPen lineWidth="1.0"/>
+                    <leftPen lineWidth="1.0"/>
+                    <bottomPen lineWidth="1.0"/>
+                    <rightPen lineWidth="1.0"/>
+                </box>
+
+                <!--Events (HTML colored)-->
+                <textField isStretchWithOverflow="true">
+                    <reportElement x="4" y="24" width="102" height="62"/>
+                    <textElement markup="html">
+                        <font size="9"/>
+                    </textElement>
+                    <textFieldExpression><![CDATA[$F{events_html}]]></textFieldExpression>
+                </textField>
+
+                <textField>
+                    <reportElement style="Style1" x="60" y="1" width="50" height="30"
+                                   isRemoveLineWhenBlank="true"
+                                   uuid="733ff549-0109-4f55-b9de-476f0ad9fbeb"/>
+                    <textElement textAlignment="Right">
+                        <font size="16" isBold="true"/>
+                    </textElement>
+                    <textFieldExpression>
+                        <![CDATA[$F{day_no}]]> </textFieldExpression>
+                </textField>
+            </frame>
+        </band>
+    </detail>
 </jasperReport>

@@ -1,11 +1,11 @@
 from librepy.jasper_report import jasper_report_manager
-from librepy.pybrex.values import pybrex_logger
+from librepy.pybrex.values import pybrex_logger, DOCUMENT_REPORT_PATH
 
 import os
 from datetime import date, datetime
 
 logger = pybrex_logger(__name__)
-REPORT_PATH = ""
+REPORT_PATH = DOCUMENT_REPORT_PATH
 
 PRINT_ACTION_PRINT = 4
 PRINT_ACTION_PDF = 2

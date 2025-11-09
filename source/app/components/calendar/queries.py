@@ -1,0 +1,44 @@
+# Centralized SQL query strings for the calendar components
+
+# SQL used by the Jasper report to render the month calendar with pill-styled events.
+# The JRXML expects the returned columns to be:
+#   - idx (integer)
+#   - cell_date (date)
+#   - day_no (integer)
+#   - events_html (string / HTML markup)
+CALENDAR_EVENTS_QUERY = (
+    "WITH days AS (\n"
+    "  SELECT generate_series(\n"
+    "           CAST($P{start_date} AS date),\n"
+    "           CAST($P{end_date}   AS date),\n"
+    "           '1 day'\n"
+    "         )::date AS cell_date\n"
+    ")\n"
+    "SELECT\n"
+    "  ((d.cell_date - CAST($P{start_date} AS date))::int + 1) AS idx,\n"
+    "  d.cell_date,\n"
+    "  EXTRACT(DAY FROM d.cell_date)::int AS day_no,\n"
+    "  COALESCE(\n"
+    "    string_agg(\n"
+    "      '<span style=''background-color:#0d6efd;color:#ffffff;border:1px solid #0b5ed7;border-radius:9999px;padding:4px 8px;display:block;width:100%;box-sizing:border-box;margin:1px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;''>' ||\n"
+    "      replace(\n"
+    "        replace(\n"
+    "          replace(\n"
+    "            to_char(ts.session_time, 'HH24:MI') || ' ' || ts.name,\n"
+    "            '&','&amp;'\n"
+    "          ),\n"
+    "          '<','&lt;'\n"
+    "        ),\n"
+    "        '>','&gt;'\n"
+    "      ) || '</span>',\n"
+    "      '<br/>'\n"
+    "      ORDER BY ts.session_time, ts.session_id\n"
+    "    ),\n"
+    "    ''\n"
+    "  ) AS events_html\n"
+    "FROM days d\n"
+    "LEFT JOIN class_scheduler_admin.trainingsession ts\n"
+    "  ON ts.session_date = d.cell_date\n"
+    "GROUP BY d.cell_date, idx, day_no\n"
+    "ORDER BY idx;"
+)

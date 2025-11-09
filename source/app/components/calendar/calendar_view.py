@@ -562,8 +562,11 @@ class Calendar(ctr_container.Container):
                 self.logger.warning("No calendar range available to print")
                 return
             from librepy.jasper_report.print_calendar import save_calendar_range_as_pdf
+            from librepy.app.components.calendar.queries import CALENDAR_EVENTS_QUERY
+
+            query_text = CALENDAR_EVENTS_QUERY
             self.logger.info(f"Invoking PDF export for range {start_date} - {end_date}")
-            save_calendar_range_as_pdf(start_date, end_date)
+            save_calendar_range_as_pdf(start_date, end_date, query_text)
             self.logger.info("Calendar PDF export invoked successfully")
         except Exception as e:
             self.logger.error(f"Error printing calendar: {e}")

@@ -17,7 +17,7 @@ def _normalize_date(d):
     return d
 
 
-def _generate_calendar_report(start_date, end_date, print_action):
+def _generate_calendar_report(start_date, end_date, print_action, query_text):
     """
     Internal function to generate a calendar events report for the given date range.
 
@@ -25,27 +25,29 @@ def _generate_calendar_report(start_date, end_date, print_action):
         start_date (date|datetime): range start (inclusive)
         end_date   (date|datetime): range end (inclusive)
         print_action (int): 4 for direct print, 2 for export as PDF
+        query_text (str): SQL text to execute (required)
     """
-    try:
-        s = _normalize_date(start_date)
-        e = _normalize_date(end_date)
-        logger.info(f"Generating calendar report for range: {s} .. {e}, action: {print_action}")
-        logger.debug(f"Report path: {REPORT_PATH}")
+    s = _normalize_date(start_date)
+    e = _normalize_date(end_date)
+    logger.info(f"Generating calendar report for range: {s} .. {e}, action: {print_action}")
+    logger.debug(f"Report path: {REPORT_PATH}")
 
-        title = f"Calendar: {s.strftime('%Y-%m-%d')} to {e.strftime('%Y-%m-%d')}"
-        report_params = {
-            "start_date":   {"value": s, "type": "date"},
-            "end_date":     {"value": e, "type": "date"},
-            "title":        {"value": title, "type": "string"},
-        }
+    title = f"Calendar: {s.strftime('%Y-%m-%d')} to {e.strftime('%Y-%m-%d')}"
+    report_params = {
+        "start_date":   {"value": s, "type": "date"},
+        "end_date":     {"value": e, "type": "date"},
+        "title":        {"value": title, "type": "string"},
+        "query_text":   {"value": query_text, "type": "string"},
+    }
 
-        jasper_report_manager.main(REPORT_PATH, report_params, print_action)
-        logger.info("Calendar report generation request completed")
-    except Exception as ex:
-        logger.error(f"Error generating calendar report: {ex}")
-        raise
+    jasper_report_manager.main(REPORT_PATH, report_params, print_action)
+    logger.info("Calendar report generation request completed")
 
 
-def save_calendar_range_as_pdf(start_date, end_date):
-    _generate_calendar_report(start_date, end_date, PRINT_ACTION_PDF)
+def save_calendar_range_as_pdf(start_date, end_date, query_text: str):
+    """
+    Export the calendar report as PDF for the given date range using the
+    provided SQL text (query_text).
+    """
+    _generate_calendar_report(start_date, end_date, PRINT_ACTION_PDF, query_text)
     logger.info("Calendar saved as PDF successfully")

@@ -26,44 +26,10 @@
     <parameter name="start_date" class="java.util.Date"/>
     <parameter name="end_date" class="java.util.Date"/>
     <parameter name="title" class="java.lang.String"/>
+    <parameter name="query_text" class="java.lang.String"/>
 
     <queryString>
-        <![CDATA[
-WITH days AS (
-  SELECT generate_series(
-           CAST($P{start_date} AS date),
-           CAST($P{end_date}   AS date),
-           '1 day'
-         )::date AS cell_date
-)
-SELECT
-  ((d.cell_date - CAST($P{start_date} AS date))::int + 1) AS idx,
-  d.cell_date,
-  EXTRACT(DAY FROM d.cell_date)::int AS day_no,
-  COALESCE(
-    string_agg(
-      '<span style="background-color:#0d6efd;color:#ffffff;border:1px solid #0b5ed7;border-radius:9999px;padding:4px 8px;display:block;width:100%;box-sizing:border-box;margin:1px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;">' ||
-      replace(
-        replace(
-          replace(
-            to_char(ts.session_time, 'HH24:MI') || ' ' || ts.name,
-            '&','&amp;'
-          ),
-          '<','&lt;'
-        ),
-        '>','&gt;'
-      ) || '</span>',
-      '<br/>'
-      ORDER BY ts.session_time, ts.session_id
-    ),
-    ''
-  ) AS events_html
-FROM days d
-LEFT JOIN class_scheduler_admin.trainingsession ts
-  ON ts.session_date = d.cell_date
-GROUP BY d.cell_date, idx, day_no
-ORDER BY idx;
-        ]]>
+        <![CDATA[$P!{query_text}]]>
     </queryString>
 
     <field name="idx" class="java.lang.Integer"/>

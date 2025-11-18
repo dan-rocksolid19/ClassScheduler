@@ -1,5 +1,6 @@
 from librepy.app.components.settings.tabs.base_tab import BaseTab
 from librepy.pybrex.listeners import Listeners
+from librepy.pybrex.msgbox import confirm_action
 from librepy.app.data.dao.session_attendee_dao import SessionAttendeeDAO
 
 
@@ -56,25 +57,43 @@ class AttendanceTab(BaseTab):
         self.grid_base.set_data(rows, heading='id')
 
     def on_row_double_click(self, ev=None):
-        if ev and ev.Buttons == 1 and ev.ClickCount == 2:
-            attendee_id = self.grid_base.active_row_heading()
-            if attendee_id is not None:
-                # Log the attendee id on double click
-                self.logger.info(f"Attendance grid double-click: attendee id {attendee_id}")
+        if not (ev and ev.Buttons == 1 and ev.ClickCount == 2):
+            return
 
-                # Toggle attendance and refresh grid
-                try:
-                    dao = SessionAttendeeDAO(self.logger)
-                    ok = dao.toggle_attendance(attendee_id)
-                    if not ok:
-                        try:
-                            self.logger.warning(f"Toggle attendance affected no rows for attendee id {attendee_id}")
-                        except Exception:
-                            pass
-                except Exception as e:
-                    self.logger.error(f"Failed to toggle attendance for {attendee_id}: {e}")
-                finally:
-                    self.load_data()
+        attendee_id = self.grid_base.active_row_heading()
+        if attendee_id is None:
+            return
+
+        # Log
+        self.logger.info(f"Attendance grid double-click: attendee id {attendee_id}")
+
+        dao = SessionAttendeeDAO(self.logger)
+
+        # Fetch current record to build confirmation
+        record = dao.get_by_id(attendee_id)
+        if record is None:
+            self.logger.warning(f"No attendee found for id {attendee_id}")
+            return
+
+        new_state_str = 'No' if record.attended else 'Yes'
+
+        # New confirmation message format
+        msg = f"Do you want to change {record.name.capitalize()} attendance to '{new_state_str}'?"
+        if not confirm_action(msg, Title="Confirm Attendance Change"):
+            return
+
+        # Perform toggle
+        try:
+            ok = dao.toggle_attendance(attendee_id)
+            if not ok:
+                self.logger.warning(
+                    f"Toggle attendance affected no rows for attendee id {attendee_id}"
+                )
+        except Exception as e:
+            self.logger.error(f"Failed to toggle attendance for {attendee_id}: {e}")
+        finally:
+            # Always reload to reflect current state
+            self.load_data()
 
     def commit(self) -> dict:
         # No data contribution yet.

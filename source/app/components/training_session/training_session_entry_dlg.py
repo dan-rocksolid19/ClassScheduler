@@ -2,6 +2,7 @@ from librepy.pybrex import dialog
 from librepy.pybrex.msgbox import msgbox, confirm_action
 from librepy.app.components.training_session.tabs.details_tab import DetailsTab
 from librepy.app.components.training_session.tabs.people_tab import PeopleTab
+from librepy.app.components.training_session.tabs.attendance_tab import AttendanceTab
 
 
 class TrainingSessionEntryDlg(dialog.DialogBase):
@@ -38,6 +39,7 @@ class TrainingSessionEntryDlg(dialog.DialogBase):
         # Tabs
         self.details_tab = None
         self.people_tab = None
+        self.attendance_tab = None
 
         parent_window = self.frame.window if self.frame is not None else None
         super().__init__(ctx, self.parent, parent_window, **props)
@@ -64,8 +66,13 @@ class TrainingSessionEntryDlg(dialog.DialogBase):
             page_people = self.add_page(tabs, 'PeoplePage', 'People')
             self.people_tab = PeopleTab(self, page_people, self.ctx, self.smgr, self.logger, session_id=self.session_id)
             self.people_tab.build()
+            # Attendance tab (empty for now)
+            page_attendance = self.add_page(tabs, 'AttendancePage', 'Attendance')
+            self.attendance_tab = AttendanceTab(self, page_attendance, self.ctx, self.smgr, self.logger, session_id=self.session_id)
+            self.attendance_tab.build()
         else:
             self.people_tab = None
+            self.attendance_tab = None
 
         # Buttons depending on mode
         if self.session_id is None:

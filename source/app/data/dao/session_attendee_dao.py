@@ -64,6 +64,29 @@ class SessionAttendeeDAO(BaseDAO):
             return rows
         return self.safe_execute('get attendees for session (grid)', _query, default_return=[])
 
+    def get_attendance_for_grid(self, session_id):
+        """Return list of dicts for Attendance tab grid.
+
+        Only includes attendees with paid == True, because attendance only counts if payment.
+        Keys per row: name, attendance (maps to model.attended)
+        """
+        def _query():
+            q = (SessionAttendee
+                 .select(SessionAttendee.name, SessionAttendee.attended)
+                 .where(
+                     (SessionAttendee.session == int(session_id)) &
+                     (SessionAttendee.paid == True)
+                 )
+                 .order_by(SessionAttendee.attendee_id))
+            rows = []
+            for a in q:
+                rows.append({
+                    'name': getattr(a, 'name', '') or '',
+                    'attendance': bool(getattr(a, 'attended', False)),
+                })
+            return rows
+        return self.safe_execute('get attendance for session (paid only)', _query, default_return=[])
+
     def get_by_id(self, attendee_id):
         def _q():
             return SessionAttendee.get(SessionAttendee.attendee_id == attendee_id)

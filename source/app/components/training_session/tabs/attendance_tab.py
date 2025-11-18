@@ -1,4 +1,5 @@
 from librepy.app.components.settings.tabs.base_tab import BaseTab
+from librepy.app.data.dao.session_attendee_dao import SessionAttendeeDAO
 
 
 class AttendanceTab(BaseTab):
@@ -36,8 +37,16 @@ class AttendanceTab(BaseTab):
             ShowRowHeader=False,
         )
 
-        # Start with no rows
-        self.grid_base.set_data([], heading='name')
+        # Initial load
+        self.load_data()
+
+    def load_data(self):
+        if not self.session_id:
+            self.grid_base.set_data([], heading='name')
+            return
+        dao = SessionAttendeeDAO(self.logger)
+        rows = dao.get_attendance_for_grid(self.session_id) or []
+        self.grid_base.set_data(rows, heading='name')
 
     def commit(self) -> dict:
         # No data contribution yet.

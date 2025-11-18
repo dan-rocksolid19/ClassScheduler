@@ -1,81 +1,136 @@
 from librepy.pybrex import dialog
+import os
+import uno
+from librepy.pybrex import values
+
 
 class AboutDialog(dialog.DialogBase):
-    POS_SIZE = 0, 0, 400, 200
-    MARGIN = 10
-    LABEL_HEIGHT = 12
+    POS_SIZE = 0, 0, 390, 200
     TITLE_COLOR = 0x2B579A
 
-    def __init__(self, ctx, parent, logger, **props):
+    def __init__(self, ctx, smgr, parent, **props):
         props['Title'] = 'About'
         props['BackgroundColor'] = 0xFFFFFF
         self.ctx = ctx
         self.parent = parent
-        self.logger = logger
-        super().__init__(ctx, self.parent, **props)
+        self.logger = parent.logger if hasattr(parent, 'logger') else None
+
+        # Load icon paths directly from graphics directory (already copied to temp by boot_manager)
+        try:
+            rocksolid_icon_path = os.path.join(values.TOOLBAR_GRAPHICS_DIR, 'rocksolid-icon.png')
+            if os.path.exists(rocksolid_icon_path):
+                self.rocksolid_icon = uno.systemPathToFileUrl(rocksolid_icon_path)
+            else:
+                self.rocksolid_icon = ''
+                if self.logger:
+                    self.logger.warning(f"Rocksolid icon not found: {rocksolid_icon_path}")
+        except Exception as e:
+            self.rocksolid_icon = ''
+            if self.logger:
+                self.logger.warning(f"Could not load icons for About dialog: {e}")
+
+        super().__init__(ctx, smgr, **props)
 
     def _create(self):
-        try:
-            x = self.MARGIN
-            y = self.MARGIN
-            width = self.POS_SIZE[2] - self.MARGIN * 2
+        x = 10
+        y = 10
+        width = 250
+        height = 12
 
-            self.add_label(
-                'LblTitle',
-                x, y,
-                width,
-                self.LABEL_HEIGHT + 4,
-                Label='Job Manager',
-                FontHeight=14,
-                FontWeight=150,
-                TextColor=self.TITLE_COLOR,
-                Align=1
-            )
+        self.add_label(
+            'LblTitle',
+            x, y,
+            width,
+            height + 10,
+            Label='SheepPro',
+            FontHeight=25,
+            FontWeight=150,
+            TextColor=self.TITLE_COLOR,
+            Align=1
+        )
 
-            y += self.LABEL_HEIGHT + 8
+        y += height + 8
 
-            description = 'Job Manager streamlines job tracking, documents and reporting within LibreOffice.'
-            self.add_label(
-                'LblDescription',
-                x, y,
-                width,
-                self.LABEL_HEIGHT * 3,
-                Label=description,
-                MultiLine=True,
-                FontHeight=11,
-                Align=0
-            )
+        self.add_label(
+            'LblVersion',
+            x, y,
+            width,
+            height,
+            Label='Version 1.2',
+            FontHeight=12,
+            TextColor=0x666666,
+            Align=1
+        )
 
-            y += self.LABEL_HEIGHT * 3 + 8
-            credits = 'Developed by RockSolid Data Solutions\nFor Farview Concrete\nContact: sales@rocksoliddata.solutions | 620-888-7050'
-            self.add_label(
-                'LblCredits',
-                x, y,
-                width,
-                self.LABEL_HEIGHT * 4,
-                Label=credits,
-                MultiLine=True,
-                FontHeight=11,
-                Align=0
-            )
+        y += height + 8
 
-            y = self.POS_SIZE[3] - 35
-            btn_width = 60
-            self.add_button(
-                'OkButton',
-                int(self.POS_SIZE[2] / 2 - btn_width / 2),
-                y,
-                btn_width,
-                20,
-                Label='OK',
-                PushButtonType=1,
-                DefaultButton=True
-            )
-        except Exception as e:
-            error_msg = f"Error creating about dialog: {str(e)}"
-            self.logger.error(error_msg)
-            MsgBox(error_msg, 16, 'UI Creation Error')
-            raise
+        self.add_line('line1', x + 10, y, width - 20, 1, Orientation=1, BackgroundColor=0x666666)
+        y += 10
+
+        description = 'SheepPro streamlines sheep management, documents and reporting within LibreOffice.'
+        self.add_label(
+            'LblDescription',
+            x, y,
+            width,
+            height * 3,
+            Label=description,
+            MultiLine=True,
+            FontHeight=12,
+            Align=1
+        )
+
+        y += height * 2
+
+        self.add_line('line2', x + 10, y, width - 20, 1, Orientation=1, BackgroundColor=0x666666)
+        y += 10
+
+        credits = 'Developed by RockSolid Data Solutions\nContact: sales@rocksoliddata.solutions | 620-888-7050'
+        self.add_label(
+            'LblCredits',
+            x, y,
+            width,
+            height * 2,
+            Label=credits,
+            MultiLine=True,
+            FontHeight=12,
+            Align=1
+        )
+
+        y += height * 2
+
+        self.add_line('line3', x + 10, y, width - 20, 1, Orientation=1, BackgroundColor=0x666666)
+        y += 10
+
+        ownership = 'Property of Paragon Farms - Elvin Hoover\nContact: elvin@paragonfarms.com | 717-445-6020\nÂ© 2025 RockSolid Data Solutions. Developed for Paragon Farms.'
+        self.add_label(
+            'LblOwnership',
+            x, y,
+            width,
+            height * 3,
+            Label=ownership,
+            MultiLine=True,
+            FontHeight=12,
+            Align=1
+        )
+        y += height + 8
+
+        image_y = 30
+        self.add_image('sheep_pro_logo', 270, image_y, 100, 100, ImageURL=self.rocksolid_icon)
+
+        y = self.POS_SIZE[3] - 35
+        btn_width = 80
+        self.add_button(
+            'OkButton',
+            int(self.POS_SIZE[2] / 2 - btn_width / 2),
+            y,
+            btn_width,
+            20,
+            Label='OK',
+            PushButtonType=1,
+            DefaultButton=True,
+            BackgroundColor=self.TITLE_COLOR,
+            TextColor=0xFFFFFF
+        )
 
     def _prepare(self):
         pass
@@ -84,4 +139,4 @@ class AboutDialog(dialog.DialogBase):
         pass
 
     def _done(self, ret):
-        return ret 
+        return ret

@@ -30,10 +30,13 @@ class SidebarManager(Sidebar):
 
         # Define sidebar items
         sidebar_items = [
-            ('Button', 'Classes List', 'job_list.png', lambda: parent.show_screen('training_session_list'), 'Home'),
-            ('Button', 'Classes', 'calendar.png', lambda: parent.show_screen('calendar'), 'Calendar of events'),
-            ('Button', 'Appointments', 'calendar.png', lambda: parent.show_screen('appointment_calendar'), 'Appointment calendar'),
-            ('Button', 'Employees', 'calendar.png', lambda: parent.show_screen('employee_calendar'), 'Employee calendar')
+            ('Button', 'Classes List', 'list.png', lambda: parent.show_screen('training_session_list'), 'Home'),
+            ('Separator',),
+            ('Button', 'Classes', 'classes.png', lambda: parent.show_screen('calendar'), 'Calendar of events'),
+            ('Separator',),
+            ('Button', 'Appointments', 'appointments.png', lambda: parent.show_screen('appointment_calendar'), 'Appointment calendar'),
+            ('Separator',),
+            ('Button', 'Employees', 'employees2.png', lambda: parent.show_screen('employee_calendar'), 'Employee calendar')
             # Add the rest of the sidebar items here
         ]
         

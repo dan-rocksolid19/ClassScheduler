@@ -55,13 +55,12 @@ class BootManager:
             self.logger.info("BootManager: Running database bootstrap")
             if not ensure_database_ready(self.logger):
                 raise BootError("DATABASE_BOOTSTRAP", "Database configuration or connection failed")
-            
-            # Stage 2: Auth bootstrap (Skipped unless needed)
-            #self.current_stage = "AUTH_BOOTSTRAP"
-            #self.logger.info("BootManager: Running auth bootstrap")
-            #if not ensure_auth_ready(self.ctx, self.smgr, self.logger):
-            #    raise BootError("AUTH_BOOTSTRAP", "Auth bootstrap failed")
-            
+
+            # Stage 2: Pre-copy Jasper report templates
+            # from librepy.jasper_report.jasper_report_manager import precopy_all_templates
+            # precopy_all_templates()
+            # self.logger.info("BootManager: Jasper report templates pre-copied")
+
             # Stage 3: App creation
             self.current_stage = "APP_INIT"
             self.logger.info("BootManager: Creating App")

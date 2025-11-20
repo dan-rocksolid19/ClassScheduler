@@ -67,7 +67,7 @@ class AboutDialog(dialog.DialogBase):
         self.add_line('line1', x + 10, y, width - 20, 1, Orientation=1, BackgroundColor=0x666666)
         y += 10
 
-        description = 'SheepPro streamlines sheep management, documents and reporting within LibreOffice.'
+        description = 'Class Manager streamlines customer records, service appointments, employee management, documents, and reporting within LibreOffice environment.'
         self.add_label(
             'LblDescription',
             x, y,
@@ -101,7 +101,7 @@ class AboutDialog(dialog.DialogBase):
         self.add_line('line3', x + 10, y, width - 20, 1, Orientation=1, BackgroundColor=0x666666)
         y += 10
 
-        ownership = 'Property of Paragon Farms - Elvin Hoover\nContact: elvin@paragonfarms.com | 717-445-6020\nÂ© 2025 RockSolid Data Solutions. Developed for Paragon Farms.'
+        ownership = 'Hoover Bernina, phone: (570)966-3822, email: hooversbernina@emypeople.net'
         self.add_label(
             'LblOwnership',
             x, y,

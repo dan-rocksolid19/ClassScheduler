@@ -23,3 +23,6 @@ def array_to_mask(flags: list[int]) -> int:
 
 def mask_to_array(mask: int) -> list[int]:
     return [1 if (mask & (1 << idx)) else 0 for idx in range(7)]
+
+def is_allowed(weekday, mask):
+    return bool(mask & (1 << weekday))

@@ -1,7 +1,7 @@
 from librepy.app.components.calendar.calendar_view import Calendar
 from librepy.app.data.dao.employee_contract_dao import EmployeeContractDAO
 from librepy.app.components.employee_scheduling.employee_contract_dlg import EmployeeContractDialog
-from librepy.app.utils.utils import mask_to_array
+from librepy.app.utils.utils import is_allowed
 import calendar as py_calendar
 import traceback
 from datetime import timedelta
@@ -173,59 +173,45 @@ class EmployeeCalendar(Calendar):
         Python's date.weekday() (Mon=0..Sun=6). If a contract has no working_days mask,
         we render it by default.
         """
-        try:
-            cfg = self.calendar_config
-            day_label_height = cfg['day_label_height']
-            entry_height = cfg.get('entry_height', 24)
-            entry_spacing = cfg.get('entry_spacing', 4)
-            entry_margin_x = cfg.get('entry_margin_x', 4)
+        cfg = self.calendar_config
+        day_label_height = cfg['day_label_height']
+        entry_height = cfg.get('entry_height', 24)
+        entry_spacing = cfg.get('entry_spacing', 4)
+        entry_margin_x = cfg.get('entry_margin_x', 4)
 
-            date_key = f"{date.year:04d}-{date.month:02d}-{date.day:02d}"
-            entries_for_day = self.calendar_data.get(date_key, [])
+        date_key = f"{date.year:04d}-{date.month:02d}-{date.day:02d}"
+        entries_for_day = self.calendar_data.get(date_key, [])
 
-            weekday_idx = date.weekday()  # Mon=0..Sun=6
-            render_idx = 0
-            for entry in entries_for_day:
-                wd_mask = entry.get('working_days')
-                if wd_mask is not None:
-                    try:
-                        arr = mask_to_array(int(wd_mask))  # ensure int in case of Decimal/str
-                    except Exception:
-                        arr = None
-                    if not arr or weekday_idx < 0 or weekday_idx >= len(arr) or not arr[weekday_idx]:
-                        # Skip rendering this entry on non-working day
-                        continue
+        weekday_idx = date.weekday()  # Mon=0..Sun=6
+        render_idx = 0
+        for entry in entries_for_day:
+            wd_mask = int(entry.get('working_days'))
+            if not is_allowed(weekday_idx, wd_mask):
+                continue
 
-                entry_name = f"pillbtn_{date.day}{date.month}{date.year}_{entry.get('id')}"
-                btn_x = x + entry_margin_x
-                btn_y = base_y + day_label_height + entry_spacing + render_idx * (entry_height + entry_spacing)
-                btn_w = cell_width - 2 * entry_margin_x
-                btn_h = entry_height
+            entry_name = f"pillbtn_{date.day}{date.month}{date.year}_{entry.get('id')}"
+            btn_x = x + entry_margin_x
+            btn_y = base_y + day_label_height + entry_spacing + render_idx * (entry_height + entry_spacing)
+            btn_w = cell_width - 2 * entry_margin_x
+            btn_h = entry_height
 
-                title = entry.get('title') or ''
-                max_len = 24
-                label = (title[:max_len - 2] + '..') if len(title) > max_len else title
+            title = entry.get('title') or ''
+            max_len = 24
+            label = (title[:max_len - 2] + '..') if len(title) > max_len else title
 
-                bg = entry.get('color', 0xD6EAF8)
-                entry_id = entry.get('id')
+            bg = entry.get('color', 0xD6EAF8)
+            entry_id = entry.get('id')
 
-                self._render_single_entry(
-                    entry_name,
-                    label,
-                    btn_x,
-                    btn_y,
-                    btn_w,
-                    btn_h,
-                    row_index,
-                    background_color=bg,
-                    entry_id=entry_id
-                )
-                render_idx += 1
-        except Exception as e:
-            # Fail-safe: log and fallback to base behavior to not break UI
-            self.logger.error(f"Error rendering entries for day {date}: {e}")
-            try:
-                super()._render_entries_for_day(date, x, base_y, cell_width, row_index)
-            except Exception:
-                pass
+            self._render_single_entry(
+                entry_name,
+                label,
+                btn_x,
+                btn_y,
+                btn_w,
+                btn_h,
+                row_index,
+                background_color=bg,
+                entry_id=entry_id
+            )
+            render_idx += 1
 

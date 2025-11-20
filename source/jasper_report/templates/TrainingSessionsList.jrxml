@@ -12,7 +12,7 @@
     <parameter name="end_date" class="java.util.Date"/>
     <parameter name="title" class="java.lang.String"/>
 
-    <!-- Query based on user's spec; parameterized for Jasper -->
+    <!-- Query -->
     <queryString>
         <![CDATA[
 SELECT
@@ -57,52 +57,71 @@ ORDER BY ts.session_date, ts.session_time
         </band>
     </title>
 
-    <!-- Column Headers -->
+    <!-- Column Header -->
     <columnHeader>
-        <band height="18">
+        <band height="20">
+
+            <!-- Date -->
             <staticText>
-                <reportElement x="0" y="0" width="75" height="18"/>
-                <textElement textAlignment="Center">
+                <reportElement x="0" y="0" width="75" height="20"
+                               mode="Opaque" backcolor="#E0E0E0"/>
+                <box><pen lineWidth="0.5"/></box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
                     <font isBold="true"/>
                 </textElement>
                 <text><![CDATA[Date]]></text>
             </staticText>
 
+            <!-- Time -->
             <staticText>
-                <reportElement x="75" y="0" width="55" height="18"/>
-                <textElement textAlignment="Center">
+                <reportElement x="75" y="0" width="55" height="20"
+                               mode="Opaque" backcolor="#E0E0E0"/>
+                <box><pen lineWidth="0.5"/></box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
                     <font isBold="true"/>
                 </textElement>
                 <text><![CDATA[Time]]></text>
             </staticText>
 
+            <!-- ID -->
             <staticText>
-                <reportElement x="130" y="0" width="35" height="18"/>
-                <textElement textAlignment="Center">
+                <reportElement x="130" y="0" width="35" height="20"
+                               mode="Opaque" backcolor="#E0E0E0"/>
+                <box><pen lineWidth="0.5"/></box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
                     <font isBold="true"/>
                 </textElement>
                 <text><![CDATA[ID]]></text>
             </staticText>
 
+            <!-- Name -->
             <staticText>
-                <reportElement x="165" y="0" width="210" height="18"/>
-                <textElement textAlignment="Center">
+                <reportElement x="165" y="0" width="210" height="20"
+                               mode="Opaque" backcolor="#E0E0E0"/>
+                <box><pen lineWidth="0.5"/></box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
                     <font isBold="true"/>
                 </textElement>
                 <text><![CDATA[Name]]></text>
             </staticText>
 
+            <!-- Price -->
             <staticText>
-                <reportElement x="375" y="0" width="75" height="18"/>
-                <textElement textAlignment="Center">
+                <reportElement x="375" y="0" width="75" height="20"
+                               mode="Opaque" backcolor="#E0E0E0"/>
+                <box><pen lineWidth="0.5"/></box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
                     <font isBold="true"/>
                 </textElement>
                 <text><![CDATA[Price]]></text>
             </staticText>
 
+            <!-- Enrolled -->
             <staticText>
-                <reportElement x="450" y="0" width="105" height="18"/>
-                <textElement textAlignment="Center">
+                <reportElement x="450" y="0" width="105" height="20"
+                               mode="Opaque" backcolor="#E0E0E0"/>
+                <box><pen lineWidth="0.5"/></box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
                     <font isBold="true"/>
                 </textElement>
                 <text><![CDATA[Enrolled]]></text>
@@ -110,47 +129,58 @@ ORDER BY ts.session_date, ts.session_time
         </band>
     </columnHeader>
 
-    <!-- Detail rows -->
+    <!-- Detail Rows -->
     <detail>
-        <band height="18">
+        <band height="20">
+
             <!-- Date -->
             <textField pattern="yyyy-MM-dd">
-                <reportElement x="0" y="0" width="75" height="18"/>
+                <reportElement x="0" y="0" width="75" height="20"/>
+                <box><pen lineWidth="0.5"/></box>
+                <textElement textAlignment="Center" verticalAlignment="Middle"/>
                 <textFieldExpression><![CDATA[$F{session_date}]]></textFieldExpression>
             </textField>
 
             <!-- Time -->
             <textField pattern="HH:mm">
-                <reportElement x="75" y="0" width="55" height="18"/>
+                <reportElement x="75" y="0" width="55" height="20"/>
+                <box><pen lineWidth="0.5"/></box>
+                <textElement textAlignment="Center" verticalAlignment="Middle"/>
                 <textFieldExpression><![CDATA[$F{session_time}]]></textFieldExpression>
             </textField>
 
             <!-- ID -->
             <textField>
-                <reportElement x="130" y="0" width="35" height="18"/>
-                <textElement textAlignment="Center"/>
+                <reportElement x="130" y="0" width="35" height="20"/>
+                <box><pen lineWidth="0.5"/></box>
+                <textElement textAlignment="Center" verticalAlignment="Middle"/>
                 <textFieldExpression><![CDATA[$F{session_id}]]></textFieldExpression>
             </textField>
 
             <!-- Name -->
             <textField>
-                <reportElement x="165" y="0" width="210" height="18"/>
+                <reportElement x="165" y="0" width="210" height="20"/>
+                <box><pen lineWidth="0.5"/></box>
+                <textElement verticalAlignment="Middle"/>
                 <textFieldExpression><![CDATA[$F{name}]]></textFieldExpression>
             </textField>
 
             <!-- Price -->
             <textField pattern="$ #,##0.00">
-                <reportElement x="375" y="0" width="75" height="18"/>
-                <textElement textAlignment="Right"/>
+                <reportElement x="375" y="0" width="75" height="20"/>
+                <box><pen lineWidth="0.5"/></box>
+                <textElement textAlignment="Right" verticalAlignment="Middle"/>
                 <textFieldExpression><![CDATA[$F{price}]]></textFieldExpression>
             </textField>
 
-            <!-- Enrolled count -->
+            <!-- Enrolled -->
             <textField>
-                <reportElement x="450" y="0" width="105" height="18"/>
-                <textElement textAlignment="Center"/>
+                <reportElement x="450" y="0" width="105" height="20"/>
+                <box><pen lineWidth="0.5"/></box>
+                <textElement textAlignment="Center" verticalAlignment="Middle"/>
                 <textFieldExpression><![CDATA[$F{enrolled_count}]]></textFieldExpression>
             </textField>
+
         </band>
     </detail>
 

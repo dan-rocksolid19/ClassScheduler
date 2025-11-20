@@ -51,112 +51,131 @@ ORDER BY appointment_date, appointment_time
         </band>
     </title>
 
-    <!-- Column Headers -->
+    <!-- Column Header -->
     <columnHeader>
-        <band height="18">
-            <staticText>
-                <reportElement x="0" y="0" width="65" height="18"/>
-                <textElement textAlignment="Center">
-                    <font isBold="true"/>
-                </textElement>
-                <text><![CDATA[Appt Date]]></text>
-            </staticText>
+        <band height="20">
 
+            <!-- ID -->
             <staticText>
-                <reportElement x="65" y="0" width="50" height="18"/>
-                <textElement textAlignment="Center">
-                    <font isBold="true"/>
-                </textElement>
-                <text><![CDATA[Time]]></text>
-            </staticText>
-
-            <staticText>
-                <reportElement x="115" y="0" width="30" height="18"/>
-                <textElement textAlignment="Center">
+                <reportElement x="0" y="0" width="30" height="20"
+                               mode="Opaque" backcolor="#E0E0E0"/>
+                <box><pen lineWidth="0.5"/></box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
                     <font isBold="true"/>
                 </textElement>
                 <text><![CDATA[ID]]></text>
             </staticText>
 
+            <!-- Appt Date -->
             <staticText>
-                <reportElement x="145" y="0" width="120" height="18"/>
-                <textElement textAlignment="Center">
+                <reportElement x="30" y="0" width="65" height="20"
+                               mode="Opaque" backcolor="#E0E0E0"/>
+                <box><pen lineWidth="0.5"/></box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <text><![CDATA[Appt Date]]></text>
+            </staticText>
+
+            <!-- Time -->
+            <staticText>
+                <reportElement x="95" y="0" width="50" height="20"
+                               mode="Opaque" backcolor="#E0E0E0"/>
+                <box><pen lineWidth="0.5"/></box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <text><![CDATA[Time]]></text>
+            </staticText>
+
+            <!-- Name -->
+            <staticText>
+                <reportElement x="145" y="0" width="170" height="20"
+                               mode="Opaque" backcolor="#E0E0E0"/>
+                <box><pen lineWidth="0.5"/></box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
                     <font isBold="true"/>
                 </textElement>
                 <text><![CDATA[Name]]></text>
             </staticText>
 
+            <!-- Phone -->
             <staticText>
-                <reportElement x="265" y="0" width="80" height="18"/>
-                <textElement textAlignment="Center">
+                <reportElement x="315" y="0" width="80" height="20"
+                               mode="Opaque" backcolor="#E0E0E0"/>
+                <box><pen lineWidth="0.5"/></box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
                     <font isBold="true"/>
                 </textElement>
                 <text><![CDATA[Phone]]></text>
             </staticText>
 
+            <!-- Email -->
             <staticText>
-                <reportElement x="345" y="0" width="120" height="18"/>
-                <textElement textAlignment="Center">
+                <reportElement x="395" y="0" width="160" height="20"
+                               mode="Opaque" backcolor="#E0E0E0"/>
+                <box><pen lineWidth="0.5"/></box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
                     <font isBold="true"/>
                 </textElement>
                 <text><![CDATA[Email]]></text>
             </staticText>
 
-            <staticText>
-                <reportElement x="465" y="0" width="90" height="18"/>
-                <textElement textAlignment="Center">
-                    <font isBold="true"/>
-                </textElement>
-                <text><![CDATA[Notes]]></text>
-            </staticText>
         </band>
     </columnHeader>
 
-    <!-- Detail rows -->
+    <!-- Detail Rows -->
     <detail>
-        <band height="18">
+        <band height="20">
+
+            <!-- ID -->
+            <textField>
+                <reportElement x="0" y="0" width="30" height="20"/>
+                <box><pen lineWidth="0.5"/></box>
+                <textElement textAlignment="Center" verticalAlignment="Middle"/>
+                <textFieldExpression><![CDATA[$F{service_apt_id}]]></textFieldExpression>
+            </textField>
+
             <!-- Appt Date -->
             <textField pattern="yyyy-MM-dd">
-                <reportElement x="0" y="0" width="65" height="18"/>
+                <reportElement x="30" y="0" width="65" height="20"/>
+                <box><pen lineWidth="0.5"/></box>
+                <textElement textAlignment="Center" verticalAlignment="Middle"/>
                 <textFieldExpression><![CDATA[$F{appointment_date}]]></textFieldExpression>
             </textField>
 
             <!-- Appt Time -->
             <textField pattern="HH:mm">
-                <reportElement x="65" y="0" width="50" height="18"/>
+                <reportElement x="95" y="0" width="50" height="20"/>
+                <box><pen lineWidth="0.5"/></box>
+                <textElement textAlignment="Center" verticalAlignment="Middle"/>
                 <textFieldExpression><![CDATA[$F{appointment_time}]]></textFieldExpression>
-            </textField>
-
-            <!-- ID -->
-            <textField>
-                <reportElement x="115" y="0" width="30" height="18"/>
-                <textElement textAlignment="Center"/>
-                <textFieldExpression><![CDATA[$F{service_apt_id}]]></textFieldExpression>
             </textField>
 
             <!-- Name -->
             <textField>
-                <reportElement x="145" y="0" width="120" height="18"/>
+                <reportElement x="145" y="0" width="170" height="20"/>
+                <box><pen lineWidth="0.5"/></box>
+                <textElement verticalAlignment="Middle"/>
                 <textFieldExpression><![CDATA[$F{name}]]></textFieldExpression>
             </textField>
 
             <!-- Phone -->
             <textField>
-                <reportElement x="265" y="0" width="80" height="18"/>
+                <reportElement x="315" y="0" width="80" height="20"/>
+                <box><pen lineWidth="0.5"/></box>
+                <textElement verticalAlignment="Middle"/>
                 <textFieldExpression><![CDATA[$F{phone_number}]]></textFieldExpression>
             </textField>
 
             <!-- Email -->
             <textField>
-                <reportElement x="345" y="0" width="120" height="18"/>
+                <reportElement x="395" y="0" width="160" height="20"/>
+                <box><pen lineWidth="0.5"/></box>
+                <textElement verticalAlignment="Middle"/>
                 <textFieldExpression><![CDATA[$F{email}]]></textFieldExpression>
             </textField>
 
-            <!-- Notes -->
-            <textField isStretchWithOverflow="true">
-                <reportElement x="465" y="0" width="90" height="18"/>
-                <textFieldExpression><![CDATA[$F{notes}]]></textFieldExpression>
-            </textField>
         </band>
     </detail>
 

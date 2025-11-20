@@ -12,6 +12,7 @@ from librepy.peewee.peewee import (
     DateField,
     DecimalField,
     BigIntegerField,
+    SmallIntegerField,
 )
 
 
@@ -67,3 +68,4 @@ class EmployeeContract(BaseModel):
     end_date = DateField()
     time_in = TimeField()
     time_out = TimeField()
+    working_days = SmallIntegerField(default=31)

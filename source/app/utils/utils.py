@@ -13,3 +13,13 @@ def format_phone_for_display(digits) -> str:
     if len(s) == 7:
         return f"{s[0:3]}-{s[3:7]}"
     return s
+
+def array_to_mask(flags: list[int]) -> int:
+    mask = 0
+    for idx, flag in enumerate(flags):  # Mon..Sun
+        if flag:
+            mask |= (1 << idx)
+    return mask
+
+def mask_to_array(mask: int) -> list[int]:
+    return [1 if (mask & (1 << idx)) else 0 for idx in range(7)]

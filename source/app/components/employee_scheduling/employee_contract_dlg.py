@@ -18,6 +18,7 @@ class EmployeeContractDialog(dialog.DialogBase):
     LABEL_HEIGHT = 14
     FIELD_HEIGHT = 22
     BUTTON_HEIGHT = 24
+    DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
     def __init__(self, parent, ctx, smgr, frame, ps, **props):
         props['Title'] = props.get('Title', 'Employee Contract')
@@ -74,12 +75,11 @@ class EmployeeContractDialog(dialog.DialogBase):
 
         self.add_label('LblWorkingDays', x, y, self.lbl_width, self.LABEL_HEIGHT, Label='Working Days', **label_kwargs)
 
-        days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
         field_x = x + self.lbl_width
         chk_width = 40
         gap = 2
         self.chk_working_days = []
-        for i, d in enumerate(days):
+        for i, d in enumerate(self.DAYS):
             cx = field_x + i * (chk_width + gap)
             chk = self.add_check(f'Chk{d}', cx, y - 1, chk_width, self.FIELD_HEIGHT, Label=d)
             self.chk_working_days.append(chk)
@@ -143,6 +143,7 @@ class EmployeeContractDialog(dialog.DialogBase):
 
         emp_id = self.get_selected_id(self.lst_emp, '_emp_items')
 
+        working_days = [i.State for i in self.chk_working_days]
         data = {
             'contract_id': self.contract_id,
             'employee_id': emp_id,
@@ -150,6 +151,7 @@ class EmployeeContractDialog(dialog.DialogBase):
             'end_date': py_end,
             'time_in': py_in,
             'time_out': py_out,
+            'working_days': working_days,
         }
         return data
 

@@ -266,6 +266,15 @@ class EmployeeContractDialog(dialog.DialogBase):
         if rec.get('time_out'):
             self.edt_out.setTime(python_time_to_uno(rec['time_out']))
 
+        from librepy.app.utils.utils import mask_to_array
+
+        wd_mask = rec.get('working_days')
+        flags = mask_to_array(int(wd_mask))
+
+        # Ensure we have 7 flags and set states on checkboxes
+        for i, chk in enumerate(self.chk_working_days):
+            chk.State = 1 if flags[i] else 0
+
     def _dispose(self):
         pass
 

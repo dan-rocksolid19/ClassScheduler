@@ -236,6 +236,8 @@ class EmployeeContractDialog(dialog.DialogBase):
 
         # If creating new, nothing else to populate
         if self.contract_id is None:
+            for i, chk in enumerate(self.chk_working_days):
+                chk.State = 1 if i < 5 else 0
             return
 
         from librepy.app.data.dao.employee_contract_dao import EmployeeContractDAO

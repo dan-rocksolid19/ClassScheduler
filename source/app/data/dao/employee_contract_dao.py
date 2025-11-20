@@ -8,7 +8,7 @@ class EmployeeContractDAO(BaseDAO):
         super().__init__(EmployeeContract, logger)
 
 
-    def create(self, employee, start_date, end_date, time_in=None, time_out=None):
+    def create(self, employee, start_date, end_date, time_in=None, time_out=None, working_days=None):
         """Create a new EmployeeContract and return the model instance."""
         def _q():
             return EmployeeContract.create(
@@ -17,10 +17,11 @@ class EmployeeContractDAO(BaseDAO):
                 end_date=end_date,
                 time_in=time_in,
                 time_out=time_out,
+                working_days=working_days,
             )
         return self.safe_execute('create EmployeeContract', _q, default_return=None)
 
-    def update(self, contract_id, employee=None, start_date=None, end_date=None, time_in=None, time_out=None):
+    def update(self, contract_id, employee=None, start_date=None, end_date=None, time_in=None, time_out=None, working_days=None):
         """Update provided fields on EmployeeContract and return the refreshed instance."""
         updates = {}
         if employee is not None:
@@ -33,6 +34,8 @@ class EmployeeContractDAO(BaseDAO):
             updates['time_in'] = time_in
         if time_out is not None:
             updates['time_out'] = time_out
+        if working_days is not None:
+            updates['working_days'] = working_days
         if updates:
             self.update_fields(EmployeeContract.contract_id == contract_id, updates, operation_name='update EmployeeContract')
         def _fetch():
@@ -56,6 +59,7 @@ class EmployeeContractDAO(BaseDAO):
             'end_date': getattr(ec, 'end_date', None),
             'time_in': getattr(ec, 'time_in', None),
             'time_out': getattr(ec, 'time_out', None),
+            'working_days': getattr(ec, 'working_days', None),
             'title': employee_name or f"Contract {getattr(ec, 'contract_id', '')}",
             'status': 'active',
         }

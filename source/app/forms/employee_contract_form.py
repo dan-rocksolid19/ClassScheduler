@@ -2,6 +2,7 @@ from typing import Any, Dict, Optional
 from datetime import date as dt_date, time as dt_time, datetime
 
 from librepy.app.forms.base_form import BaseForm
+from librepy.app.utils.utils import array_to_mask
 from librepy.app.data.dao.employee_contract_dao import EmployeeContractDAO
 
 
@@ -53,6 +54,7 @@ class EmployeeContractForm(BaseForm):
         raw_end_date = self.require("end_date") if not self.partial else self.get("end_date")
         raw_time_in = self.get("time_in")
         raw_time_out = self.get("time_out")
+        raw_working_days = self.get("working_days")
 
         cleaned: Dict[str, Any] = {}
 
@@ -111,5 +113,29 @@ class EmployeeContractForm(BaseForm):
         if ("time_in" in cleaned) and ("time_out" in cleaned):
             if cleaned["time_in"] >= cleaned["time_out"]:
                 self.add_error("time_in", "time_in must be before time_out")
+
+        if (raw_working_days is not None) or not self.partial:
+            if raw_working_days is None:
+                cleaned["working_days"] = 31
+            else:
+                try:
+                    arr = list(raw_working_days)
+                    if len(arr) != 7:
+                        raise ValueError("working_days must have 7 elements (Mon..Sun)")
+                    # Coerce values to 0/1 integers
+                    flags = []
+                    for v in arr:
+                        if isinstance(v, str):
+                            v = v.strip()
+                            if v in ("1", "0"):
+                                vi = int(v)
+                            else:
+                                vi = 1 if v.lower() in ("true", "yes", "on") else 0 if v == "" else int(v)
+                        else:
+                            vi = int(v) if v is not None else 0
+                        flags.append(1 if vi else 0)
+                    cleaned["working_days"] = array_to_mask(flags)
+                except Exception as ex:
+                    self.add_error("working_days", f"Invalid working_days: {ex}")
 
         self.cleaned_data.update(cleaned)

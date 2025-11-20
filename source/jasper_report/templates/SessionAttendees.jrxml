@@ -39,7 +39,9 @@
 
             <staticText>
                 <reportElement x="0" y="30" width="60" height="16" uuid="f3b6c2a5-9d39-42e2-bd7f-5f0fb5a3f1a1"/>
-                <textElement><font isBold="true"/></textElement>
+                <textElement>
+                    <font isBold="true"/>
+                </textElement>
                 <text><![CDATA[Session:]]></text>
             </staticText>
             <textField>
@@ -49,7 +51,9 @@
 
             <staticText>
                 <reportElement x="0" y="50" width="60" height="16" uuid="3d2c2b3a-9c0e-4b3f-8d7a-6b6a3f2d1c0b"/>
-                <textElement><font isBold="true"/></textElement>
+                <textElement>
+                    <font isBold="true"/>
+                </textElement>
                 <text><![CDATA[Date/Time:]]></text>
             </staticText>
             <textField pattern="yyyy-MM-dd">
@@ -65,58 +69,134 @@
 
     <!-- Column Header for table -->
     <columnHeader>
-        <band height="18">
+        <band height="20">
+            <!-- ID -->
             <staticText>
-                <reportElement x="0" y="0" width="60" height="18" uuid="c5a9ce5a-2fb4-4c77-9a9a-2c1e4f5b6a7c"/>
-                <textElement textAlignment="Center"><font isBold="true"/></textElement>
+                <reportElement x="0" y="0" width="60" height="20"
+                               mode="Opaque" backcolor="#E0E0E0"
+                               uuid="c5a9ce5a-2fb4-4c77-9a9a-2c1e4f5b6a7c"/>
+                <box>
+                    <pen lineWidth="0.5"/>
+                </box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
                 <text><![CDATA[ID]]></text>
             </staticText>
+
+            <!-- Name -->
             <staticText>
-                <reportElement x="62" y="0" width="160" height="18" uuid="e6f7a8b9-c0d1-4e2f-9a3b-4c5d6e7f8a9b"/>
-                <textElement textAlignment="Center"><font isBold="true"/></textElement>
+                <reportElement x="62" y="0" width="160" height="20"
+                               mode="Opaque" backcolor="#E0E0E0"
+                               uuid="e6f7a8b9-c0d1-4e2f-9a3b-4c5d6e7f8a9b"/>
+                <box>
+                    <pen lineWidth="0.5"/>
+                </box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
                 <text><![CDATA[Name]]></text>
             </staticText>
+
+            <!-- Email -->
             <staticText>
-                <reportElement x="224" y="0" width="180" height="18" uuid="0a1b2c3d-4e5f-6071-8293-94a5b6c7d8e9"/>
-                <textElement textAlignment="Center"><font isBold="true"/></textElement>
+                <reportElement x="224" y="0" width="180" height="20"
+                               mode="Opaque" backcolor="#E0E0E0"
+                               uuid="0a1b2c3d-4e5f-6071-8293-94a5b6c7d8e9"/>
+                <box>
+                    <pen lineWidth="0.5"/>
+                </box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
                 <text><![CDATA[Email]]></text>
             </staticText>
+
+            <!-- Phone -->
             <staticText>
-                <reportElement x="406" y="0" width="90" height="18" uuid="10293847-5647-4839-1029-384756473829"/>
-                <textElement textAlignment="Center"><font isBold="true"/></textElement>
+                <reportElement x="406" y="0" width="90" height="20"
+                               mode="Opaque" backcolor="#E0E0E0"
+                               uuid="10293847-5647-4839-1029-384756473829"/>
+                <box>
+                    <pen lineWidth="0.5"/>
+                </box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
                 <text><![CDATA[Phone]]></text>
             </staticText>
+
+            <!-- Paid -->
             <staticText>
-                <reportElement x="498" y="0" width="57" height="18" uuid="91827364-5463-7263-8192-837465564738"/>
-                <textElement textAlignment="Center"><font isBold="true"/></textElement>
+                <reportElement x="498" y="0" width="57" height="20"
+                               mode="Opaque" backcolor="#E0E0E0"
+                               uuid="91827364-5463-7263-8192-837465564738"/>
+                <box>
+                    <pen lineWidth="0.5"/>
+                </box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
                 <text><![CDATA[Paid]]></text>
             </staticText>
         </band>
     </columnHeader>
 
-    <!-- Detail rows -->
+    <!-- Detail rows (table body) -->
     <detail>
-        <band height="16">
+        <band height="20">
+            <!-- ID -->
             <textField>
-                <reportElement x="0" y="0" width="60" height="16" uuid="1a2b3c4d-5e6f-7081-92a3-b4c5d6e7f809"/>
-                <textElement textAlignment="Center"/>
+                <reportElement x="0" y="0" width="60" height="20"
+                               uuid="1a2b3c4d-5e6f-7081-92a3-b4c5d6e7f809"/>
+                <box>
+                    <pen lineWidth="0.5"/>
+                </box>
+                <textElement textAlignment="Center" verticalAlignment="Middle"/>
                 <textFieldExpression><![CDATA[$F{attendee_id}]]></textFieldExpression>
             </textField>
+
+            <!-- Name -->
             <textField>
-                <reportElement x="62" y="0" width="160" height="16" uuid="22334455-6677-8899-aabb-ccddeeff0011"/>
+                <reportElement x="62" y="0" width="160" height="20"
+                               uuid="22334455-6677-8899-aabb-ccddeeff0011"/>
+                <box>
+                    <pen lineWidth="0.5"/>
+                </box>
+                <textElement verticalAlignment="Middle"/>
                 <textFieldExpression><![CDATA[$F{name}]]></textFieldExpression>
             </textField>
+
+            <!-- Email -->
             <textField>
-                <reportElement x="224" y="0" width="180" height="16" uuid="33445566-7788-99aa-bbcc-ddeeff001122"/>
+                <reportElement x="224" y="0" width="180" height="20"
+                               uuid="33445566-7788-99aa-bbcc-ddeeff001122"/>
+                <box>
+                    <pen lineWidth="0.5"/>
+                </box>
+                <textElement verticalAlignment="Middle"/>
                 <textFieldExpression><![CDATA[$F{email}]]></textFieldExpression>
             </textField>
+
+            <!-- Phone -->
             <textField>
-                <reportElement x="406" y="0" width="90" height="16" uuid="44556677-8899-aabb-ccdd-eeff00112233"/>
+                <reportElement x="406" y="0" width="90" height="20"
+                               uuid="44556677-8899-aabb-ccdd-eeff00112233"/>
+                <box>
+                    <pen lineWidth="0.5"/>
+                </box>
+                <textElement verticalAlignment="Middle"/>
                 <textFieldExpression><![CDATA[$F{phone}]]></textFieldExpression>
             </textField>
+
+            <!-- Paid -->
             <textField>
-                <reportElement x="498" y="0" width="57" height="16" uuid="55667788-99aa-bbcc-ddee-ff0011223344"/>
-                <textElement textAlignment="Center"/>
+                <reportElement x="498" y="0" width="57" height="20"
+                               uuid="55667788-99aa-bbcc-ddee-ff0011223344"/>
+                <box>
+                    <pen lineWidth="0.5"/>
+                </box>
+                <textElement textAlignment="Center" verticalAlignment="Middle"/>
                 <textFieldExpression><![CDATA[$F{paid}]]></textFieldExpression>
             </textField>
         </band>
